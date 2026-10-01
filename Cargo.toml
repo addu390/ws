@@ -1,0 +1,57 @@
+[workspace]
+resolver = "3"
+members = ["crates/*"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.98"
+license = "Apache-2.0"
+publish = false
+
+[workspace.dependencies]
+ws-core = { path = "crates/ws-core" }
+ws-config = { path = "crates/ws-config" }
+ws-net = { path = "crates/ws-net" }
+ws-auth = { path = "crates/ws-auth" }
+ws-api = { path = "crates/ws-api" }
+ws-broker = { path = "crates/ws-broker" }
+ws-paper = { path = "crates/ws-paper" }
+ws-audit = { path = "crates/ws-audit" }
+ws-policy = { path = "crates/ws-policy" }
+
+anyhow = "1"
+async-trait = "0.1"
+clap = { version = "4", features = ["derive"] }
+rpassword = "7"
+chromiumoxide = { version = "0.9", default-features = false }
+chrono = { version = "0.4", features = ["serde"] }
+futures = "0.3"
+percent-encoding = "2"
+chrono-tz = "0.10"
+keyring = "4"
+regex = "1"
+rmcp = { version = "3.5", features = ["server", "transport-io", "macros"] }
+rust_decimal = { version = "1", features = ["serde-with-str", "macros"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "fs", "time"] }
+toml = "1"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["json", "env-filter"] }
+uuid = { version = "1", features = ["v4", "serde"] }
+wreq = { version = "0.16", features = ["cookies", "json", "gzip", "brotli", "deflate"] }
+wreq-util = "0.2"
+
+insta = { version = "1", features = ["json"] }
+wiremock = "0.6"
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
+[workspace.lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+missing_errors_doc = "allow"
+unwrap_used = "deny"
+expect_used = "warn"

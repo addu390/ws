@@ -1,0 +1,28 @@
+[package]
+name = "ws-mcp"
+description = "Wealthsimple MCP server"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+ws-core.workspace = true
+ws-config.workspace = true
+ws-net.workspace = true
+ws-auth.workspace = true
+ws-api.workspace = true
+ws-broker.workspace = true
+ws-paper.workspace = true
+ws-audit.workspace = true
+ws-policy.workspace = true
+
+anyhow.workspace = true
+clap.workspace = true
+rpassword.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true

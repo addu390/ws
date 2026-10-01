@@ -1,0 +1,22 @@
+[package]
+name = "ws-net"
+description = "Browser-emulating HTTP client"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+wreq.workspace = true
+wreq-util.workspace = true
+
+[dev-dependencies]
+wiremock.workspace = true

@@ -1,0 +1,15 @@
+[package]
+name = "ws-api"
+description = "Wealthsimple GraphQL operations"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+ws-core.workspace = true
+ws-net.workspace = true
+ws-auth.workspace = true
