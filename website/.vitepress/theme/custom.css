@@ -1,0 +1,269 @@
+:root {
+  --ws-ink-1: #0f1620;
+  --ws-ink-2: #1f2a37;
+  --ws-ink-3: #3d4856;
+  --ws-ink-4: #5e6878;
+  --ws-ink-6: #c8cdd5;
+  --ws-ink-rgb: 15 22 32;
+  --ws-surface-0: #f6f7f9;
+  --ws-font-hero:
+    "Playfair Display", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  --vp-font-family-base:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --vp-font-family-mono: "JetBrains Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  --vp-c-bg: var(--ws-surface-0);
+  --vp-c-text-1: var(--ws-ink-1);
+  --vp-c-text-2: var(--ws-ink-3);
+  --vp-c-text-3: var(--ws-ink-4);
+  --ws-content-max: 1180px;
+  --ws-content-pad: 24px;
+  --ws-edge: 24px;
+}
+
+@media (min-width: 640px) {
+  :root {
+    --ws-content-pad: 48px;
+  }
+}
+
+@media (min-width: 768px) {
+  :root {
+    --ws-edge: 32px;
+  }
+}
+
+@media (min-width: 960px) {
+  :root {
+    --ws-content-pad: 64px;
+  }
+}
+
+html {
+  color-scheme: light;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.Layout {
+  background: var(--ws-surface-0);
+}
+
+.VPContent.is-home {
+  padding-top: 0 !important;
+}
+
+.VPHome {
+  position: relative;
+  box-sizing: border-box;
+  height: 100vh;
+  margin: 0 !important;
+  overflow: hidden;
+}
+
+.VPHome > * {
+  position: relative;
+  z-index: 1;
+}
+
+.ws-model {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 1.2s ease;
+}
+
+.VPHome > .ws-model {
+  position: fixed;
+  z-index: 0;
+}
+
+.ws-model.ready {
+  opacity: 1;
+}
+
+.ws-model canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.ws-model::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 7rem;
+  background: linear-gradient(to bottom, var(--ws-surface-0) 0%, transparent 100%);
+}
+
+@media (max-width: 639px) {
+  .ws-model.ready {
+    opacity: 0.45;
+  }
+}
+
+.VPHero {
+  position: relative;
+  isolation: isolate;
+  overflow: visible;
+  padding-top: clamp(5rem, 12vw, 8.5rem) !important;
+  padding-bottom: 0 !important;
+}
+
+.VPHero .container {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  max-width: var(--ws-content-max);
+}
+
+.VPHero .main {
+  width: 100% !important;
+  max-width: 900px;
+}
+
+.VPHero .heading {
+  perspective: 700px;
+}
+
+.VPHero .text {
+  display: block;
+  max-width: 36rem;
+  font-family: var(--ws-font-hero);
+  font-size: 3rem;
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: 0.02em;
+  color: var(--vp-c-text-1);
+}
+
+.ws-hero-rotor {
+  display: inline-block;
+  margin-top: 0.22em;
+  white-space: nowrap;
+  text-align: left;
+  color: #9c2f27;
+  transform-origin: 50% 58%;
+  transition:
+    transform 0.22s cubic-bezier(0.35, 0.6, 0.35, 1),
+    opacity 0.22s ease;
+  backface-visibility: hidden;
+}
+
+.ws-hero-rotor.flip-out {
+  transform: rotateX(-88deg);
+  opacity: 0.1;
+}
+
+.ws-hero-rotor.flip-in {
+  transition: none;
+  transform: rotateX(88deg);
+  opacity: 0.1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ws-hero-rotor {
+    transition: none;
+  }
+}
+
+.VPHero .tagline {
+  max-width: 36rem;
+  margin-top: 0.85rem;
+  padding-top: 0 !important;
+  font-size: 1.0625rem;
+  font-weight: 400;
+  line-height: 1.6;
+  color: var(--vp-c-text-2);
+}
+
+.VPHero .actions {
+  padding-top: 2rem;
+}
+
+.VPButton {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  padding: 0.7rem 1.1rem !important;
+  border-radius: 0 !important;
+  font-family: var(--vp-font-family-mono) !important;
+  font-size: 0.8125rem !important;
+  font-weight: 400 !important;
+  line-height: 1 !important;
+}
+
+.VPButton.brand {
+  border-color: var(--ws-ink-1) !important;
+  background: var(--ws-ink-1) !important;
+  color: var(--ws-surface-0) !important;
+}
+
+.VPButton.brand:hover {
+  border-color: var(--ws-ink-3) !important;
+  background: var(--ws-ink-3) !important;
+}
+
+.VPButton.alt {
+  border-color: var(--ws-ink-6) !important;
+  background: transparent !important;
+  color: var(--ws-ink-2) !important;
+}
+
+.VPButton.alt:hover {
+  border-color: var(--ws-ink-4) !important;
+  color: var(--ws-ink-1) !important;
+}
+
+.ws-fine {
+  max-width: 36rem;
+  margin: 1.5rem 0 0;
+  font-size: 0.6875rem;
+  line-height: 1.7;
+  color: var(--vp-c-text-3);
+}
+
+.ws-fine p {
+  margin: 0;
+}
+
+.ws-fine a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: rgb(var(--ws-ink-rgb) / 0.2);
+  text-underline-offset: 2px;
+}
+
+.ws-fine a:hover {
+  color: var(--vp-c-text-2);
+}
+
+@media (max-width: 639px) {
+  .VPHero .text {
+    font-size: 2.25rem;
+  }
+}
+
+@media (min-width: 1200px) and (min-height: 700px) {
+  .VPHome {
+    width: min(var(--ws-content-max), calc(100% - (2 * var(--ws-content-pad))));
+    margin: 0 auto 0 max(var(--ws-edge), calc((100% - var(--ws-content-max)) / 2 - 6rem)) !important;
+    padding-top: 8.5rem;
+  }
+
+  .VPHome .VPHero {
+    padding: 0 !important;
+  }
+
+  .VPHome .VPHero .container {
+    width: 100%;
+    padding: 0;
+  }
+
+  .VPHome .VPHero .tagline {
+    margin-top: 1.1rem;
+  }
+}
