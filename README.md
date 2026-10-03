@@ -43,3 +43,7 @@ ws-mcp place-order <ticket>
 ```
 
 Run `ws-mcp --help` for everything else.
+
+## Disclaimer
+
+This software is provided as is, without warranty of any kind. It is not financial advice. Wealthsimple can change its API at any time, which may break this tool or cause orders to behave unexpectedly. You are solely responsible for every order placed through it and for any losses, account restrictions, or other consequences. The authors accept no liability.
