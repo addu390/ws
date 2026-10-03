@@ -87,7 +87,8 @@ impl rmcp::ServerHandler for Server {
 #[cfg(test)]
 mod tests {
     use rmcp::model::{
-        CallToolRequestParams, ClientConfig, ElicitRequestParams, ElicitResult, ElicitationAction, ElicitationCapability,
+        CallToolRequestParams, ClientConfig, ElicitRequestParams, ElicitResult, ElicitationAction,
+        ElicitationCapability,
     };
     use rmcp::service::{RequestContext, RunningService};
     use rmcp::{ClientHandler, RoleClient};
@@ -177,7 +178,10 @@ mod tests {
     }
 
     fn commands<S: clap::Subcommand>() -> Vec<String> {
-        S::augment_subcommands(clap::Command::new("ws-mcp")).get_subcommands().map(|c| c.get_name().replace('-', "_")).collect()
+        S::augment_subcommands(clap::Command::new("ws-mcp"))
+            .get_subcommands()
+            .map(|c| c.get_name().replace('-', "_"))
+            .collect()
     }
 
     async fn tool_names(client: &RunningService<RoleClient, Client>) -> Vec<String> {
@@ -243,7 +247,8 @@ mod tests {
         let (_, text) = call(&client, "preview_order", order("10", "40")).await.unwrap_or_else(|e| panic!("{e}"));
         let ticket = parsed(&text);
         assert_eq!(ticket["approval"], "pending");
-        let (failed, text) = call(&client, "place_order", json!({"ticket_id": ticket["id"]})).await.unwrap_or_else(|e| panic!("{e}"));
+        let (failed, text) =
+            call(&client, "place_order", json!({"ticket_id": ticket["id"]})).await.unwrap_or_else(|e| panic!("{e}"));
         assert!(failed && text.contains("ws-mcp approve"), "{text}");
     }
 
@@ -260,8 +265,9 @@ mod tests {
             let client = chatty(&scratch, limits, Client { answer }).await;
             let (_, text) = call(&client, "preview_order", large.clone()).await.unwrap_or_else(|e| panic!("{e}"));
             let ticket = parsed(&text);
-            let (failed, text) =
-                call(&client, "place_order", json!({"ticket_id": ticket["id"]})).await.unwrap_or_else(|e| panic!("{e}"));
+            let (failed, text) = call(&client, "place_order", json!({"ticket_id": ticket["id"]}))
+                .await
+                .unwrap_or_else(|e| panic!("{e}"));
             assert_eq!(!failed, placed, "{limits} {answer:?}: {text}");
         }
     }
@@ -294,10 +300,12 @@ mod tests {
     #[tokio::test]
     async fn refuses_names_that_match_nothing() {
         let client = connect().await;
-        let (failed, text) = call(&client, "quote", json!({"security": "AAPL"})).await.unwrap_or_else(|e| panic!("{e}"));
+        let (failed, text) =
+            call(&client, "quote", json!({"security": "AAPL"})).await.unwrap_or_else(|e| panic!("{e}"));
         assert!(failed);
         assert!(text.contains("no security with the ticker AAPL"), "{text}");
-        let (failed, text) = call(&client, "positions", json!({"account": "rrsp"})).await.unwrap_or_else(|e| panic!("{e}"));
+        let (failed, text) =
+            call(&client, "positions", json!({"account": "rrsp"})).await.unwrap_or_else(|e| panic!("{e}"));
         assert!(failed && text.contains("no account called rrsp"), "{text}");
     }
 

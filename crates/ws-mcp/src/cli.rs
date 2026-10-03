@@ -35,9 +35,7 @@ pub enum Command {
     /// Open a dashboard in your browser.
     Dashboard,
     /// Approve a ticket that needs it, after showing what it would place. Asks you to confirm.
-    Approve {
-        ticket_id: TicketId,
-    },
+    Approve { ticket_id: TicketId },
     /// Engage the kill switch: no order can be previewed, placed, or cancelled until `resume`.
     Kill,
     /// Lift the kill switch. Asks you to confirm.

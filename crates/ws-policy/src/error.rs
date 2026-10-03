@@ -27,7 +27,9 @@ pub enum Denial {
     TooManyOrders { max: u32 },
     #[error("order value {value} on top of {spent} spent today exceeds max_daily_spend {max}")]
     DailySpend { spent: Money, value: Money, max: Money },
-    #[error("ticket {0} needs approval. The user must run `ws-mcp approve {0}` in a terminal or approve it on `ws-mcp dashboard`")]
+    #[error(
+        "ticket {0} needs approval. The user must run `ws-mcp approve {0}` in a terminal or approve it on `ws-mcp dashboard`"
+    )]
     NeedsApproval(TicketId),
     #[error("approving in the chat is off. The user can turn it on with `ws-mcp config approve_in_chat true`")]
     ChatApprovalOff,

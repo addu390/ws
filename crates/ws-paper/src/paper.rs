@@ -6,8 +6,8 @@ use async_trait::async_trait;
 use ws_broker::{Broker, Error, Reader};
 use ws_common::Locked;
 use ws_core::{
-    Account, AccountId, Activity, Clock, IdempotencyKey, Money, Order, OrderId, Placed, Position, Quantity, Quote, Report, Security,
-    SecurityId,
+    Account, AccountId, Activity, Clock, IdempotencyKey, Money, Order, OrderId, Placed, Position, Quantity, Quote,
+    Report, Security, SecurityId,
 };
 
 use crate::ledger::Ledger;
@@ -162,7 +162,8 @@ mod tests {
 
     fn paper(scratch: &Scratch) -> (Paper, Arc<Market>) {
         let market = Arc::new(Market(Mutex::new(dec!(40))));
-        let paper = Paper::new(market.clone(), cad(dec!(1000)), scratch.path("ledger.json"), Arc::new(FixedClock::at(noon())));
+        let paper =
+            Paper::new(market.clone(), cad(dec!(1000)), scratch.path("ledger.json"), Arc::new(FixedClock::at(noon())));
         (paper, market)
     }
 
@@ -186,7 +187,10 @@ mod tests {
         let scratch = Scratch::new();
         let (paper, market) = paper(&scratch);
         assert_eq!(paper.cash(&account()).ok(), Some(cad(dec!(1000))));
-        let id = paper.place(&limit_buy(dec!(2), dec!(35)), &IdempotencyKey::fresh()).await.unwrap_or_else(|e| panic!("{e}"));
+        let id = paper
+            .place(&limit_buy(dec!(2), dec!(35)), &IdempotencyKey::fresh())
+            .await
+            .unwrap_or_else(|e| panic!("{e}"));
         assert_eq!(paper.pending_orders(&account()).await.map(|p| p.len()).ok(), Some(1));
 
         market.set(dec!(34));
@@ -219,6 +223,9 @@ mod tests {
         let scratch = Scratch::new();
         let (paper, _) = paper(&scratch);
         ws_common::write(&scratch.path("ledger.json"), b"{oops").unwrap_or_else(|e| panic!("{e}"));
-        assert!(matches!(paper.place(&limit_buy(dec!(1), dec!(40)), &IdempotencyKey::fresh()).await, Err(Error::Backend(_))));
+        assert!(matches!(
+            paper.place(&limit_buy(dec!(1), dec!(40)), &IdempotencyKey::fresh()).await,
+            Err(Error::Backend(_))
+        ));
     }
 }

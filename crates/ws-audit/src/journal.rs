@@ -107,7 +107,10 @@ mod tests {
     fn omits_empty_fields() {
         let [_, cancel] = entries();
         let json = serde_json::to_string(&cancel).unwrap_or_default();
-        assert_eq!(json, r#"{"at":"2026-10-02T15:00:00Z","action":"cancel","verdict":"succeeded","order_id":"order-1"}"#);
+        assert_eq!(
+            json,
+            r#"{"at":"2026-10-02T15:00:00Z","action":"cancel","verdict":"succeeded","order_id":"order-1"}"#
+        );
     }
 
     #[test]

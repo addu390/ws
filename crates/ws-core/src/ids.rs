@@ -65,7 +65,7 @@ id!(IdentityId, "identity", |raw| raw.starts_with("identity-"));
 id!(IdempotencyKey, "idempotency key", |raw| raw.starts_with("order-"));
 
 impl IdempotencyKey {
-/// Sent to Wealthsimple as the order's `externalId`, so a retry with the same key is a no-op.
+    /// Sent to Wealthsimple as the order's `externalId`, so a retry with the same key is a no-op.
     #[must_use]
     pub fn fresh() -> Self {
         Self(format!("order-{}", Uuid::new_v4()))

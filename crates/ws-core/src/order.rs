@@ -12,11 +12,7 @@ pub struct Quantity(Decimal);
 
 impl Quantity {
     pub fn new(value: Decimal) -> Result<Self, Error> {
-        if value > Decimal::ZERO {
-            Ok(Self(value.normalize()))
-        } else {
-            Err(Error::NonPositiveQuantity(value))
-        }
+        if value > Decimal::ZERO { Ok(Self(value.normalize())) } else { Err(Error::NonPositiveQuantity(value)) }
     }
 
     #[must_use]
@@ -100,12 +96,22 @@ impl Order {
         Ok(Self::build(account, security, Side::Buy, Size::Value(value), Kind::Market))
     }
 
-    pub fn limit_buy(account: AccountId, security: SecurityId, quantity: Quantity, limit: Money) -> Result<Self, Error> {
+    pub fn limit_buy(
+        account: AccountId,
+        security: SecurityId,
+        quantity: Quantity,
+        limit: Money,
+    ) -> Result<Self, Error> {
         positive(limit)?;
         Ok(Self::build(account, security, Side::Buy, Size::Shares(quantity), Kind::Limit { limit }))
     }
 
-    pub fn limit_sell(account: AccountId, security: SecurityId, quantity: Quantity, limit: Money) -> Result<Self, Error> {
+    pub fn limit_sell(
+        account: AccountId,
+        security: SecurityId,
+        quantity: Quantity,
+        limit: Money,
+    ) -> Result<Self, Error> {
         positive(limit)?;
         Ok(Self::build(account, security, Side::Sell, Size::Shares(quantity), Kind::Limit { limit }))
     }
@@ -165,7 +171,10 @@ impl Order {
             Size::Shares(quantity) => Ok(quantity),
             Size::Value(value) => {
                 if value.currency() != price.currency() {
-                    return Err(Error::CurrencyMismatch { left: value.currency().code(), right: price.currency().code() });
+                    return Err(Error::CurrencyMismatch {
+                        left: value.currency().code(),
+                        right: price.currency().code(),
+                    });
                 }
                 let shares = value.amount().checked_div(price.amount()).ok_or(Error::Overflow)?;
                 Quantity::new(shares.round_dp_with_strategy(FRACTION_SCALE, RoundingStrategy::ToZero))
@@ -246,8 +255,14 @@ mod tests {
     #[test]
     fn value_buys_take_positive_whole_cents() {
         let (account, security) = ids();
-        assert_eq!(Order::value_buy(account.clone(), security.clone(), cad(dec!(0))), Err(Error::NonPositiveValue(dec!(0))));
-        assert_eq!(Order::value_buy(account.clone(), security.clone(), cad(dec!(1.005))), Err(Error::TooPrecise(dec!(1.005))));
+        assert_eq!(
+            Order::value_buy(account.clone(), security.clone(), cad(dec!(0))),
+            Err(Error::NonPositiveValue(dec!(0)))
+        );
+        assert_eq!(
+            Order::value_buy(account.clone(), security.clone(), cad(dec!(1.005))),
+            Err(Error::TooPrecise(dec!(1.005)))
+        );
         let order = Order::value_buy(account, security, cad(dec!(25))).unwrap_or_else(|e| panic!("{e}"));
         assert_eq!((order.side(), order.kind(), order.shares()), (Side::Buy, Kind::Market, None));
         assert_eq!(order.notional(&quote(dec!(121.4), MarketStatus::Open)), Ok(cad(dec!(25))));

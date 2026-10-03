@@ -22,14 +22,20 @@ pub async fn show() -> anyhow::Result<()> {
         store.save(&session)?;
     }
     let minutes = session.introspect(&client, &endpoints).await?.and_then(|i| i.expires_in()).map(|s| s / 60);
-    row("Login", minutes.map_or_else(|| "logged in".to_owned(), |m| format!("logged in, access token good for {m} min")));
+    row(
+        "Login",
+        minutes.map_or_else(|| "logged in".to_owned(), |m| format!("logged in, access token good for {m} min")),
+    );
     row("Mode", config.mode());
 
     let wiring = Wiring::build(&home)?;
     let limits = config.limits();
     let allowed: Vec<String> =
         wiring.reader.accounts().await?.iter().filter(|a| limits.allows(a.id())).map(resolve::label).collect();
-    row("Trading in", if allowed.is_empty() { "no accounts. Run `ws-mcp setup` to pick some".to_owned() } else { allowed.join(", ") });
+    row(
+        "Trading in",
+        if allowed.is_empty() { "no accounts. Run `ws-mcp setup` to pick some".to_owned() } else { allowed.join(", ") },
+    );
 
     let Some(guard) = wiring.guard else {
         row("Kill switch", if Kill::new(home.kill()).engaged() { "on" } else { "off" });

@@ -100,7 +100,7 @@ impl<T: Serialize + DeserializeOwned + Default> Locked<T> {
         &mut self.value
     }
 
-/// Rewrites in place, not by rename, because the lock is held on this file.
+    /// Rewrites in place, not by rename, because the lock is held on this file.
     pub fn save(&mut self) -> Result<(), Error> {
         let bytes = encode(&self.path, &self.value)?;
         let path = &self.path;
@@ -188,7 +188,9 @@ mod tests {
         let scratch = Scratch::new();
         let path = scratch.path("log.jsonl");
         for line in ["a\n", "b\n"] {
-            append(&path).and_then(|mut f| f.write_all(line.as_bytes()).map_err(io(&path))).unwrap_or_else(|e| panic!("{e}"));
+            append(&path)
+                .and_then(|mut f| f.write_all(line.as_bytes()).map_err(io(&path)))
+                .unwrap_or_else(|e| panic!("{e}"));
         }
         assert_eq!(fs::read_to_string(&path).ok().as_deref(), Some("a\nb\n"));
         #[cfg(unix)]

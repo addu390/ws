@@ -121,10 +121,16 @@ mod tests {
             .respond_with(ResponseTemplate::new(200).set_body_json(json!({"identity_canonical_id": "identity-abc"})))
             .mount(&server)
             .await;
-        Mock::given(method("GET")).and(path("/oauth/token/info")).respond_with(ResponseTemplate::new(401)).mount(&server).await;
+        Mock::given(method("GET"))
+            .and(path("/oauth/token/info"))
+            .respond_with(ResponseTemplate::new(401))
+            .mount(&server)
+            .await;
         Mock::given(method("POST"))
             .and(path("/oauth/token"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(json!({"access_token": "fresh", "refresh_token": "r2"})))
+            .respond_with(
+                ResponseTemplate::new(200).set_body_json(json!({"access_token": "fresh", "refresh_token": "r2"})),
+            )
             .expect(1)
             .mount(&server)
             .await;

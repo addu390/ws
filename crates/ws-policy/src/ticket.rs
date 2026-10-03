@@ -80,8 +80,15 @@ pub struct Ticket {
 }
 
 impl Ticket {
-    pub(crate) fn issue(order: Order, symbol: Option<String>, value: Money, needs_approval: bool, now: DateTime<Utc>) -> Self {
-        let (approval, ttl) = if needs_approval { (Approval::Pending, APPROVAL_TTL) } else { (Approval::NotNeeded, TTL) };
+    pub(crate) fn issue(
+        order: Order,
+        symbol: Option<String>,
+        value: Money,
+        needs_approval: bool,
+        now: DateTime<Utc>,
+    ) -> Self {
+        let (approval, ttl) =
+            if needs_approval { (Approval::Pending, APPROVAL_TTL) } else { (Approval::NotNeeded, TTL) };
         Self { id: TicketId::fresh(), order, symbol, value, key: IdempotencyKey::fresh(), expires: now + ttl, approval }
     }
 

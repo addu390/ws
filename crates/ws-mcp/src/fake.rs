@@ -5,8 +5,8 @@ use rust_decimal::dec;
 use ws_broker::{Error, Reader};
 use ws_config::Config;
 use ws_core::{
-    Account, AccountId, Activity, Clock, Currency, FixedClock, IdempotencyKey, Management, MarketStatus, Placed, Position,
-    Quote, Registration, Report, Security, SecurityId, fixtures,
+    Account, AccountId, Activity, Clock, Currency, FixedClock, IdempotencyKey, Management, MarketStatus, Placed,
+    Position, Quote, Registration, Report, Security, SecurityId, fixtures,
 };
 use ws_paper::Paper;
 use ws_policy::{Guard, Kill};
@@ -18,7 +18,10 @@ pub struct Market;
 #[async_trait]
 impl Reader for Market {
     async fn accounts(&self) -> Result<Vec<Account>, Error> {
-        Ok(vec![Account::new(fixtures::account(), Registration::Tfsa, Management::SelfDirected, Currency::Cad).named("Main")])
+        Ok(vec![
+            Account::new(fixtures::account(), Registration::Tfsa, Management::SelfDirected, Currency::Cad)
+                .named("Main"),
+        ])
     }
 
     async fn positions(&self, _: &AccountId) -> Result<Vec<Position>, Error> {

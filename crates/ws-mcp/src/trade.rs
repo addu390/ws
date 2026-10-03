@@ -73,7 +73,11 @@ impl PreviewOrder {
             (Some(_), Some(_)) | (None, None) => return Err(Failure::Invalid("give exactly one of shares or amount")),
             (None, Some(amount)) => match (self.side, self.limit, self.stop) {
                 (Side::Buy, None, None) => Order::value_buy(account, security, cad(amount)?)?,
-                _ => return Err(Failure::Invalid("amount is only for market buys. Use shares for sells and limit orders")),
+                _ => {
+                    return Err(Failure::Invalid(
+                        "amount is only for market buys. Use shares for sells and limit orders",
+                    ));
+                }
             },
             (Some(shares), None) => {
                 let shares = Quantity::new(shares)?;
@@ -86,7 +90,9 @@ impl PreviewOrder {
                         Order::stop_limit_sell(account, security, shares, cad(stop)?, cad(limit)?)?
                     }
                     (Side::Buy, _, Some(_)) => return Err(Failure::Invalid("stop prices are only for sells")),
-                    (Side::Sell, None, Some(_)) => return Err(Failure::Invalid("a stop price needs a limit price too")),
+                    (Side::Sell, None, Some(_)) => {
+                        return Err(Failure::Invalid("a stop price needs a limit price too"));
+                    }
                 }
             }
         };
@@ -152,7 +158,8 @@ impl Action for CancelOrder {
 pub struct LimitsStatus {}
 
 impl Action for LimitsStatus {
-    const SUMMARY: &'static str = "Show the mode, the kill switch, the configured limits, and how much of today's budget is used";
+    const SUMMARY: &'static str =
+        "Show the mode, the kill switch, the configured limits, and how much of today's budget is used";
     type Context = Guard;
     type Output = Status;
 

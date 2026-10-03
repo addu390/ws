@@ -6,8 +6,9 @@ use ws_net::{Client, Headers, Response};
 
 use crate::{Endpoints, Error};
 
-static APP_SCRIPT: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r#"(?i)<script[^>]*\ssrc="([^"]*/app-[a-f0-9]+\.js)""#).unwrap_or_else(|e| panic!("{e}")));
+static APP_SCRIPT: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r#"(?i)<script[^>]*\ssrc="([^"]*/app-[a-f0-9]+\.js)""#).unwrap_or_else(|e| panic!("{e}"))
+});
 static CLIENT_ID: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r#"(?i)"production"[^}]*clientId:"([a-f0-9]+)""#).unwrap_or_else(|e| panic!("{e}")));
 
@@ -105,7 +106,8 @@ mod tests {
     #[ignore = "hits the real Wealthsimple login page, run with --ignored"]
     async fn finds_the_client_id_in_production() {
         let client = Client::chrome().unwrap_or_else(|e| panic!("{e}"));
-        let device = Device::adopt("d".into(), &client, &Endpoints::production()).await.unwrap_or_else(|e| panic!("{e}"));
+        let device =
+            Device::adopt("d".into(), &client, &Endpoints::production()).await.unwrap_or_else(|e| panic!("{e}"));
         assert!(!device.device_id().is_empty() && !device.client_id().is_empty());
     }
 }

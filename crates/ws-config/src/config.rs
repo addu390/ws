@@ -152,7 +152,12 @@ mod tests {
         assert!(changed.limits().allows(&AccountId::parse("tfsa-abc").unwrap_or_else(|e| panic!("{e}"))));
         assert_eq!(set("max_order_value", "300").map(|c| c.limits().max_order_value().amount()).ok(), Some(dec!(300)));
         assert_eq!(set("max_orders_per_day", "2").map(|c| c.limits().max_orders_per_day()).ok(), Some(2));
-        assert_eq!(set("blocked_securities", "sec-s-a, sec-s-b").map(|c| c.limits().blocks(&SecurityId::parse("sec-s-b").unwrap_or_else(|e| panic!("{e}")))).ok(), Some(true));
+        assert_eq!(
+            set("blocked_securities", "sec-s-a, sec-s-b")
+                .map(|c| c.limits().blocks(&SecurityId::parse("sec-s-b").unwrap_or_else(|e| panic!("{e}"))))
+                .ok(),
+            Some(true)
+        );
 
         let refused = |key: &str, value: &str| set(key, value).err().map(|e| e.to_string()).unwrap_or_default();
         assert!(refused("market_hours", "false").contains("unknown setting market_hours"));

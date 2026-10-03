@@ -46,7 +46,6 @@ uuid = { version = "1", features = ["v4", "serde"] }
 wreq = { version = "0.16", features = ["cookies", "json", "gzip", "brotli", "deflate"] }
 wreq-util = "0.2"
 
-insta = { version = "1", features = ["json"] }
 wiremock = "0.6"
 
 [workspace.lints.rust]

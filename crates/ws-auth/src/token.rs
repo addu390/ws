@@ -152,7 +152,9 @@ mod tests {
             .and(path("/oauth/token"))
             .and(header("x-ws-profile", "invest"))
             .and(body_partial_json(json!({"grant_type": "refresh_token", "refresh_token": "r1", "client_id": "cid"})))
-            .respond_with(ResponseTemplate::new(200).set_body_json(json!({"access_token": "a2", "refresh_token": "r2"})))
+            .respond_with(
+                ResponseTemplate::new(200).set_body_json(json!({"access_token": "a2", "refresh_token": "r2"})),
+            )
             .mount(&server)
             .await;
 

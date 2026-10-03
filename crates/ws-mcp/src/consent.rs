@@ -33,7 +33,8 @@ pub async fn ask(guard: &Guard, peer: &Peer<RoleServer>, id: &TicketId) -> Resul
     }
     let account = guard.reader().accounts().await?.into_iter().find(|a| a.id() == ticket.order().account());
     let account = account.map_or_else(|| ticket.order().account().to_string(), |a| resolve::label(&a));
-    let question = format!("Approve this order?\n\n{}\nAccount: {account}\nAbout {}", describe(&ticket), ticket.value());
+    let question =
+        format!("Approve this order?\n\n{}\nAccount: {account}\nAbout {}", describe(&ticket), ticket.value());
     match peer.elicit_with_timeout::<Consent>(question, Some(WAIT)).await {
         Ok(Some(Consent { approve: true })) => {
             guard.approve(id, Approver::Chat)?;

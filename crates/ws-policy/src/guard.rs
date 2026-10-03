@@ -53,7 +53,11 @@ impl Guard {
         let ticket = Ticket::issue(order, symbol, assessed.value, assessed.needs_approval, self.clock.now());
         self.desk.file(&ticket)?;
         let reason = if assessed.needs_approval { "needs approval" } else { "ready to place" };
-        self.record(&Entry::new(self.clock.now(), Action::Preview, Verdict::Allowed).for_order(ticket.order().clone()).because(reason))?;
+        self.record(
+            &Entry::new(self.clock.now(), Action::Preview, Verdict::Allowed)
+                .for_order(ticket.order().clone())
+                .because(reason),
+        )?;
         Ok(ticket)
     }
 
@@ -76,7 +80,9 @@ impl Guard {
                 Ok(Receipt { order_id: placed, key: ticket.key().clone() })
             }
             Err(e) => {
-                let entry = Entry::new(self.clock.now(), Action::Place, Verdict::Failed).for_order(order).with_key(ticket.key().clone());
+                let entry = Entry::new(self.clock.now(), Action::Place, Verdict::Failed)
+                    .for_order(order)
+                    .with_key(ticket.key().clone());
                 self.record(&entry.because(e.to_string()))?;
                 Err(e.into())
             }
@@ -92,7 +98,11 @@ impl Guard {
             Err(Denial::ReadOnly)
         };
         if let Err(denial) = allowed {
-            self.record(&Entry::new(self.clock.now(), Action::Cancel, Verdict::Denied).with_key(key.clone()).because(denial.to_string()))?;
+            self.record(
+                &Entry::new(self.clock.now(), Action::Cancel, Verdict::Denied)
+                    .with_key(key.clone())
+                    .because(denial.to_string()),
+            )?;
             return Err(denial.into());
         }
         match self.broker.cancel(key).await {
@@ -101,7 +111,11 @@ impl Guard {
                 Ok(())
             }
             Err(e) => {
-                self.record(&Entry::new(self.clock.now(), Action::Cancel, Verdict::Failed).with_key(key.clone()).because(e.to_string()))?;
+                self.record(
+                    &Entry::new(self.clock.now(), Action::Cancel, Verdict::Failed)
+                        .with_key(key.clone())
+                        .because(e.to_string()),
+                )?;
                 Err(e.into())
             }
         }
@@ -113,12 +127,8 @@ impl Guard {
 
     pub fn awaiting_approval(&self) -> Result<Vec<Ticket>, Error> {
         let now = self.clock.now();
-        let mut tickets: Vec<Ticket> = self
-            .desk
-            .list()?
-            .into_iter()
-            .filter(|t| t.approval() == Approval::Pending && !t.is_expired(now))
-            .collect();
+        let mut tickets: Vec<Ticket> =
+            self.desk.list()?.into_iter().filter(|t| t.approval() == Approval::Pending && !t.is_expired(now)).collect();
         tickets.sort_by_key(Ticket::expires);
         Ok(tickets)
     }
@@ -299,7 +309,8 @@ mod tests {
     use ws_common::fixtures::Scratch;
     use ws_core::fixtures::{cad, limit_buy as buy, noon};
     use ws_core::{
-        Account, AccountId, Activity, IdempotencyKey, MarketStatus, Placed, Position, Quote, Report, Security, SecurityId,
+        Account, AccountId, Activity, IdempotencyKey, MarketStatus, Placed, Position, Quote, Report, Security,
+        SecurityId,
     };
 
     use super::*;
@@ -489,7 +500,10 @@ mod tests {
 
         rig.clock.advance(Duration::minutes(5));
         assert_eq!(denied(rig.guard.approve(ticket.id(), Approver::Chat)), Denial::ChatApprovalOff);
-        assert_eq!(rig.guard.approve(ticket.id(), Approver::Terminal).map(|t| t.approval()).ok(), Some(Approval::Granted));
+        assert_eq!(
+            rig.guard.approve(ticket.id(), Approver::Terminal).map(|t| t.approval()).ok(),
+            Some(Approval::Granted)
+        );
         assert_eq!(rig.journal.entries().last().and_then(|e| e.reason()), Some("approved in the terminal"));
         assert!(rig.guard.awaiting_approval().is_ok_and(|w| w.is_empty()));
         assert!(rig.guard.place(ticket.id()).await.is_ok());

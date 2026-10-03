@@ -61,7 +61,7 @@ impl Hold {
         self.usage
     }
 
-/// Records the order before it is sent. A failed send is not refunded, since it may have reached the broker.
+    /// Records the order before it is sent. A failed send is not refunded, since it may have reached the broker.
     pub(crate) fn charge(&mut self, value: Money, buy: bool) -> Result<(), Error> {
         let spent = if buy { self.usage.spent.checked_add(value)? } else { self.usage.spent };
         let usage = Usage::new(self.usage.orders.saturating_add(1), spent);
@@ -119,7 +119,10 @@ mod tests {
     #[test]
     fn resets_on_a_new_day() {
         let scratch = Scratch::new();
-        budget(&scratch).hold(day(2)).and_then(|mut h| h.charge(cad(dec!(100)), true)).unwrap_or_else(|e| panic!("{e}"));
+        budget(&scratch)
+            .hold(day(2))
+            .and_then(|mut h| h.charge(cad(dec!(100)), true))
+            .unwrap_or_else(|e| panic!("{e}"));
         let usage = budget(&scratch).usage(day(3)).unwrap_or_else(|e| panic!("{e}"));
         assert_eq!((usage.orders(), usage.spent()), (0, cad(dec!(0))));
     }

@@ -68,7 +68,8 @@ pub(crate) fn account(wire: wire::Account) -> Result<Option<Account>, Mismatch> 
         "PORTFOLIO_LINE_OF_CREDIT" => Registration::LineOfCredit,
         _ => Registration::Other(kind.clone()),
     };
-    let mut account = Account::new(AccountId::parse(wire.id)?, registration, management, currency(wire.currency.as_deref())?);
+    let mut account =
+        Account::new(AccountId::parse(wire.id)?, registration, management, currency(wire.currency.as_deref())?);
     if let Some(nickname) = wire.nickname.filter(|n| !n.is_empty()) {
         account = account.named(nickname);
     }
@@ -239,7 +240,9 @@ pub(crate) fn report(key: IdempotencyKey, wire: wire::ExtendedOrder) -> Result<R
     if let Some(quantity) = wire.submitted_quantity.filter(|q| *q > Decimal::ZERO) {
         report = report.with_quantity(Quantity::new(quantity)?);
     }
-    if let (Some(filled), Some(average)) = (wire.filled_quantity.filter(|q| *q > Decimal::ZERO), wire.average_filled_price) {
+    if let (Some(filled), Some(average)) =
+        (wire.filled_quantity.filter(|q| *q > Decimal::ZERO), wire.average_filled_price)
+    {
         report = report.with_fill(Quantity::new(filled)?, money(average, currency)?);
     }
     if let Some(limit) = wire.limit_price {
@@ -382,7 +385,8 @@ mod tests {
 
     #[test]
     fn drops_closed_accounts() {
-        let closed = account(from(json!({"id": "a", "status": "closed", "currency": "CAD", "unifiedAccountType": "CASH"})));
+        let closed =
+            account(from(json!({"id": "a", "status": "closed", "currency": "CAD", "unifiedAccountType": "CASH"})));
         assert!(matches!(closed, Ok(None)));
     }
 
@@ -395,7 +399,8 @@ mod tests {
             "security": {"id": "sec-s-abc", "stock": {"symbol": "XEQT", "name": "iShares", "primaryExchange": "TSX"}},
         }));
         let account = AccountId::parse("tfsa-1").unwrap_or_else(|e| panic!("{e}"));
-        let position = position(&account, wire).unwrap_or_else(|e| panic!("{e:?}")).unwrap_or_else(|| panic!("dropped"));
+        let position =
+            position(&account, wire).unwrap_or_else(|e| panic!("{e:?}")).unwrap_or_else(|| panic!("dropped"));
         assert_eq!(position.quantity().value(), dec!(2.5));
         assert_eq!(position.value().amount(), dec!(250.1235));
         assert_eq!(position.cost().map(|c| c.amount()), Some(dec!(200)));
@@ -467,7 +472,10 @@ mod tests {
         let order = placed(row("PLACED")).unwrap_or_else(|e| panic!("{e:?}"));
         assert_eq!((order.id().as_str(), order.status(), order.side()), ("order-abc", Status::Placed, Side::Buy));
         assert_eq!(order.key().map(IdempotencyKey::as_str), Some("order-2fb5c80f-0000-4000-8000-000000000000"));
-        assert_eq!((order.symbol(), order.quantity().map(|q| q.value()), order.limit()), (Some("CCO"), Some(dec!(0.2058)), None));
+        assert_eq!(
+            (order.symbol(), order.quantity().map(|q| q.value()), order.limit()),
+            (Some("CCO"), Some(dec!(0.2058)), None)
+        );
         assert!(placed(row("FILLED")).is_err());
     }
 
@@ -485,12 +493,19 @@ mod tests {
         let key = IdempotencyKey::fresh();
         let open = report(key.clone(), lookup("pending_submission", None, None)).unwrap_or_else(|e| panic!("{e:?}"));
         assert_eq!((open.key(), open.status(), open.side()), (&key, Status::PendingSubmission, Side::Buy));
-        assert_eq!((open.quantity().map(|q| q.value()), open.limit().map(|m| m.amount())), (Some(dec!(1)), Some(dec!(0.405))));
+        assert_eq!(
+            (open.quantity().map(|q| q.value()), open.limit().map(|m| m.amount())),
+            (Some(dec!(1)), Some(dec!(0.405)))
+        );
         assert!(open.expires().is_some() && open.filled().is_none());
 
-        let filled = report(key.clone(), lookup("filled", Some("1.0000"), Some("0.4000"))).unwrap_or_else(|e| panic!("{e:?}"));
+        let filled =
+            report(key.clone(), lookup("filled", Some("1.0000"), Some("0.4000"))).unwrap_or_else(|e| panic!("{e:?}"));
         assert_eq!(filled.status(), Status::Filled);
-        assert_eq!((filled.filled().map(|q| q.value()), filled.average().map(|m| m.amount())), (Some(dec!(1)), Some(dec!(0.4))));
+        assert_eq!(
+            (filled.filled().map(|q| q.value()), filled.average().map(|m| m.amount())),
+            (Some(dec!(1)), Some(dec!(0.4)))
+        );
         assert!(report(key, lookup("teleported", None, None)).is_err());
     }
 
@@ -512,7 +527,8 @@ mod tests {
         );
         let shares = Quantity::new(dec!(1)).unwrap_or_else(|e| panic!("{e}"));
         let limit_buy = |quantity| {
-            Order::limit_buy(account.clone(), security.clone(), quantity, cad(dec!(0.20))).unwrap_or_else(|e| panic!("{e}"))
+            Order::limit_buy(account.clone(), security.clone(), quantity, cad(dec!(0.20)))
+                .unwrap_or_else(|e| panic!("{e}"))
         };
         assert_eq!(
             create_input(&limit_buy(shares), &key).unwrap_or_else(|e| panic!("{e}")),
@@ -537,7 +553,8 @@ mod tests {
             Order::market_buy(account.clone(), security.clone(), shares).good_till_cancelled(),
             limit_buy(half),
             limit_buy(shares).good_till_cancelled(),
-            Order::limit_sell(account.clone(), security.clone(), shares, cad(dec!(9))).unwrap_or_else(|e| panic!("{e}")),
+            Order::limit_sell(account.clone(), security.clone(), shares, cad(dec!(9)))
+                .unwrap_or_else(|e| panic!("{e}")),
             Order::market_sell(account, security, shares),
         ];
         for order in refused {

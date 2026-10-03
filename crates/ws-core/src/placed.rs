@@ -45,8 +45,27 @@ pub struct Placed {
 
 impl Placed {
     #[must_use]
-    pub fn new(id: OrderId, account: AccountId, security: SecurityId, side: Side, status: Status, created: DateTime<Utc>) -> Self {
-        Self { id, key: None, account, security, symbol: None, side, status, quantity: None, limit: None, stop: None, created }
+    pub fn new(
+        id: OrderId,
+        account: AccountId,
+        security: SecurityId,
+        side: Side,
+        status: Status,
+        created: DateTime<Utc>,
+    ) -> Self {
+        Self {
+            id,
+            key: None,
+            account,
+            security,
+            symbol: None,
+            side,
+            status,
+            quantity: None,
+            limit: None,
+            stop: None,
+            created,
+        }
     }
 
     #[must_use]

@@ -6,8 +6,8 @@ use serde_json::{Value, json};
 use tokio::sync::Mutex;
 use ws_auth::{Endpoints, Session, Store};
 use ws_core::{
-    Account, AccountId, Activity, IdempotencyKey, IdentityId, Order, OrderId, Placed, Position, Quote, Report, Security,
-    SecurityId,
+    Account, AccountId, Activity, IdempotencyKey, IdentityId, Order, OrderId, Placed, Position, Quote, Report,
+    Security, SecurityId,
 };
 use ws_net::{Client, Headers};
 
@@ -155,14 +155,16 @@ impl Api {
         convert::report(key.clone(), node).map_err(|Mismatch(detail)| Error::Shape { operation: ORDER.name(), detail })
     }
 
-/// Resends only when the first attempt was refused unprocessed (an expired session, or HTTP 429/503).
+    /// Resends only when the first attempt was refused unprocessed (an expired session, or HTTP 429/503).
     pub async fn place(&self, order: &Order, key: &IdempotencyKey) -> Result<OrderId, Error> {
         let input = convert::create_input(order, key)?;
         let result = self.run(&CREATE, json!({"input": input})).await?.so_orders_create_order;
         if let Some(problems) = wire::OrderProblem::describe(result.errors) {
             return Err(Error::Rejected(problems));
         }
-        let created = result.order.ok_or_else(|| Error::Shape { operation: CREATE.name(), detail: "no order and no errors".to_owned() })?;
+        let created = result
+            .order
+            .ok_or_else(|| Error::Shape { operation: CREATE.name(), detail: "no order and no errors".to_owned() })?;
         OrderId::parse(created.order_id).map_err(|e| Error::Shape { operation: CREATE.name(), detail: e.to_string() })
     }
 
@@ -188,8 +190,8 @@ impl Api {
         let mut cursor: Option<String> = None;
         for _ in 0..MAX_PAGES {
             let data = self.run(operation, variables(cursor.as_deref())).await?;
-            let page = connection(data)
-                .map_err(|Mismatch(detail)| Error::Shape { operation: operation.name(), detail })?;
+            let page =
+                connection(data).map_err(|Mismatch(detail)| Error::Shape { operation: operation.name(), detail })?;
             let next = page.next();
             tracing::debug!(operation = operation.name(), received = page.edges.len(), more = next.is_some(), "page");
             nodes.extend(page.edges.into_iter().map(|edge| edge.node));
@@ -212,7 +214,8 @@ impl Api {
             let used = self.session.lock().await.clone();
             let response = self.http.post(&self.graphql, &headers(&used), &body).await?;
             let envelope = if response.is_success() { Some(response.json::<wire::Envelope>()?) } else { None };
-            let (data, problems) = envelope.map_or((None, Vec::new()), |e| (Some(e.data), e.errors.unwrap_or_default()));
+            let (data, problems) =
+                envelope.map_or((None, Vec::new()), |e| (Some(e.data), e.errors.unwrap_or_default()));
 
             if response.status() == 401 || problems.iter().any(wire::Problem::unauthenticated) {
                 if refreshed {
@@ -353,7 +356,9 @@ mod tests {
             .and(header("authorization", "Bearer good"))
             .and(header("x-ws-profile", "trade"))
             .and(header("x-ws-api-version", "12"))
-            .and(body_partial_json(json!({"operationName": "FetchAllAccountFinancials", "variables": {"cursor": "p2"}})))
+            .and(body_partial_json(
+                json!({"operationName": "FetchAllAccountFinancials", "variables": {"cursor": "p2"}}),
+            ))
             .respond_with(ResponseTemplate::new(200).set_body_json(accounts_page(&[account("b")], None)))
             .mount(&server)
             .await;
@@ -365,13 +370,8 @@ mod tests {
             .await;
 
         let (api, _) = api(&server, "good");
-        let ids: Vec<String> = api
-            .accounts()
-            .await
-            .unwrap_or_else(|e| panic!("{e}"))
-            .iter()
-            .map(|a| a.id().to_string())
-            .collect();
+        let ids: Vec<String> =
+            api.accounts().await.unwrap_or_else(|e| panic!("{e}")).iter().map(|a| a.id().to_string()).collect();
         assert_eq!(ids, ["a", "b"]);
     }
 
@@ -394,7 +394,9 @@ mod tests {
             .await;
         Mock::given(method("POST"))
             .and(path("/oauth/token"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(json!({"access_token": "fresh", "refresh_token": "r2"})))
+            .respond_with(
+                ResponseTemplate::new(200).set_body_json(json!({"access_token": "fresh", "refresh_token": "r2"})),
+            )
             .expect(1)
             .mount(&server)
             .await;
@@ -416,7 +418,12 @@ mod tests {
             .mount(&server)
             .await;
         Mock::given(method("POST")).and(path("/graphql")).respond_with(ResponseTemplate::new(401)).mount(&server).await;
-        Mock::given(method("POST")).and(path("/oauth/token")).respond_with(ResponseTemplate::new(400)).expect(0).mount(&server).await;
+        Mock::given(method("POST"))
+            .and(path("/oauth/token"))
+            .respond_with(ResponseTemplate::new(400))
+            .expect(0)
+            .mount(&server)
+            .await;
 
         let (api, store) = api(&server, "stale");
         store.save(&session("fresh")).unwrap_or_else(|e| panic!("{e}"));
@@ -430,7 +437,9 @@ mod tests {
         Mock::given(method("POST")).and(path("/graphql")).respond_with(ResponseTemplate::new(401)).mount(&server).await;
         Mock::given(method("POST"))
             .and(path("/oauth/token"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(json!({"access_token": "fresh", "refresh_token": "r2"})))
+            .respond_with(
+                ResponseTemplate::new(200).set_body_json(json!({"access_token": "fresh", "refresh_token": "r2"})),
+            )
             .expect(1)
             .mount(&server)
             .await;
@@ -497,7 +506,8 @@ mod tests {
     fn value_buy() -> Order {
         let account = AccountId::parse("rrsp-1").unwrap_or_else(|e| panic!("{e}"));
         let security = SecurityId::parse("sec-s-abc").unwrap_or_else(|e| panic!("{e}"));
-        let value = ws_core::Money::new(rust_decimal::dec!(25), ws_core::Currency::Cad).unwrap_or_else(|e| panic!("{e}"));
+        let value =
+            ws_core::Money::new(rust_decimal::dec!(25), ws_core::Currency::Cad).unwrap_or_else(|e| panic!("{e}"));
         Order::value_buy(account, security, value).unwrap_or_else(|e| panic!("{e}"))
     }
 

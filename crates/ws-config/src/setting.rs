@@ -51,7 +51,9 @@ pub(crate) fn assign(table: &mut Table, key: &str, value: &str) -> Result<(), Er
         Kind::Count => {
             Value::Integer(value.parse().map_err(|_| Error::Invalid { field: name, reason: "must be a whole number" })?)
         }
-        Kind::Flag => Value::Boolean(value.parse().map_err(|_| Error::Invalid { field: name, reason: "must be true or false" })?),
+        Kind::Flag => {
+            Value::Boolean(value.parse().map_err(|_| Error::Invalid { field: name, reason: "must be true or false" })?)
+        }
         Kind::List => Value::Array(
             value.split(',').map(str::trim).filter(|s| !s.is_empty()).map(|s| Value::String(s.to_owned())).collect(),
         ),

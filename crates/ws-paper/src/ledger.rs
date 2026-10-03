@@ -4,8 +4,8 @@ use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use ws_core::{
-    AccountId, Activity, IdempotencyKey, Money, Order, OrderId, Placed, Quantity, Quote, Report, Security, SecurityId, Side, Status,
-    exchange_day,
+    AccountId, Activity, IdempotencyKey, Money, Order, OrderId, Placed, Quantity, Quote, Report, Security, SecurityId,
+    Side, Status, exchange_day,
 };
 
 use crate::book::{Book, Resting};
@@ -36,11 +36,19 @@ pub(crate) struct Ledger {
 }
 
 impl Ledger {
-    pub(crate) fn place(&mut self, order: &Order, key: &IdempotencyKey, quote: &Quote, cash: Money, now: DateTime<Utc>) -> Result<OrderId, String> {
+    pub(crate) fn place(
+        &mut self,
+        order: &Order,
+        key: &IdempotencyKey,
+        quote: &Quote,
+        cash: Money,
+        now: DateTime<Utc>,
+    ) -> Result<OrderId, String> {
         if let Some(id) = self.keys.get(key) {
             return Ok(id.clone());
         }
-        let holdings = self.accounts.entry(order.account().clone()).or_insert_with(|| Holdings { cash, lots: BTreeMap::new() });
+        let holdings =
+            self.accounts.entry(order.account().clone()).or_insert_with(|| Holdings { cash, lots: BTreeMap::new() });
         match order.side() {
             Side::Buy => {
                 let needed = order.notional(quote).map_err(|e| e.to_string())?;
@@ -59,7 +67,13 @@ impl Ledger {
         self.next += 1;
         let id = OrderId::parse(format!("paper-{}", self.next)).map_err(|e| e.to_string())?;
         self.keys.insert(key.clone(), id.clone());
-        self.book.add(Resting { id: id.clone(), key: key.clone(), order: order.clone(), placed: now, day: exchange_day(now) });
+        self.book.add(Resting {
+            id: id.clone(),
+            key: key.clone(),
+            order: order.clone(),
+            placed: now,
+            day: exchange_day(now),
+        });
         self.sweep(&HashMap::from([(quote.security().clone(), quote.clone())]), cash, now);
         Ok(id)
     }
@@ -81,11 +95,18 @@ impl Ledger {
                 self.book.add(resting);
                 continue;
             };
-            let holdings = self.accounts.entry(resting.order.account().clone()).or_insert_with(|| Holdings { cash, lots: BTreeMap::new() });
+            let holdings = self
+                .accounts
+                .entry(resting.order.account().clone())
+                .or_insert_with(|| Holdings { cash, lots: BTreeMap::new() });
             match execute(holdings, &resting.order, price) {
                 Ok((amount, quantity)) => {
-                    let symbol = self.securities.get(resting.order.security()).map_or_else(|| resting.order.security().to_string(), |s| s.symbol().to_owned());
-                    let activity = resting.activity("FILLED", now).with_amount(amount).with_asset(symbol, Some(quantity.value()));
+                    let symbol = self
+                        .securities
+                        .get(resting.order.security())
+                        .map_or_else(|| resting.order.security().to_string(), |s| s.symbol().to_owned());
+                    let activity =
+                        resting.activity("FILLED", now).with_amount(amount).with_asset(symbol, Some(quantity.value()));
                     self.finish(activity, resting.report(Status::Filled).with_fill(quantity, price));
                 }
                 Err(reason) => {
@@ -147,7 +168,10 @@ fn execute(holdings: &mut Holdings, order: &Order, price: Money) -> Result<(Mone
                 return Err(format!("insufficient paper cash: {} available, {value} needed", holdings.cash));
             }
             holdings.cash = holdings.cash.checked_sub(value).map_err(|e| e.to_string())?;
-            let lot = holdings.lots.entry(order.security().clone()).or_insert(Lot { quantity: Decimal::ZERO, cost: Money::zero(value.currency()) });
+            let lot = holdings
+                .lots
+                .entry(order.security().clone())
+                .or_insert(Lot { quantity: Decimal::ZERO, cost: Money::zero(value.currency()) });
             lot.quantity += quantity;
             lot.cost = lot.cost.checked_add(value).map_err(|e| e.to_string())?;
             Ok((Money::new(-value.amount(), value.currency()).map_err(|e| e.to_string())?, shares))
@@ -201,7 +225,7 @@ mod tests {
         let id = place(&mut ledger, &buy(dec!(1), dec!(30)), dec!(40)).unwrap_or_else(|e| panic!("{e}"));
         assert_eq!(ledger.pending(&account()).len(), 1);
         ledger.sweep(&HashMap::from([(security(), quote(dec!(29)))]), cad(dec!(1000)), now());
-        assert!(ledger.pending(&account()).is_empty());
+        assert_eq!(ledger.pending(&account()), Vec::<Placed>::new());
         assert_eq!(ledger.history(&account(), 1)[0].id(), id.as_str());
         assert_eq!(ledger.cash(&account()), Some(cad(dec!(971))));
     }
@@ -214,15 +238,18 @@ mod tests {
         assert_eq!(ledger.lots(&account())[0].1, Lot { quantity: dec!(3), cost: cad(dec!(120)) });
         assert_eq!(ledger.cash(&account()), Some(cad(dec!(890))));
         place(&mut ledger, &sell(dec!(3), dec!(50)), dec!(50)).unwrap_or_else(|e| panic!("{e}"));
-        assert!(ledger.lots(&account()).is_empty());
+        assert_eq!(ledger.lots(&account()), Vec::new());
     }
 
     #[test]
     fn refuses_what_paper_cannot_cover() {
         let mut ledger = Ledger::default();
-        assert!(place(&mut ledger, &buy(dec!(30), dec!(40)), dec!(40)).is_err_and(|e| e.contains("insufficient paper cash")));
+        assert!(
+            place(&mut ledger, &buy(dec!(30), dec!(40)), dec!(40))
+                .is_err_and(|e| e.contains("insufficient paper cash"))
+        );
         assert!(place(&mut ledger, &sell(dec!(1), dec!(40)), dec!(40)).is_err_and(|e| e.contains("only 0 shares")));
-        assert!(ledger.pending(&account()).is_empty());
+        assert_eq!(ledger.pending(&account()), Vec::<Placed>::new());
     }
 
     #[test]
@@ -230,7 +257,9 @@ mod tests {
         let mut ledger = Ledger::default();
         let order = Order::value_buy(account(), security(), cad(dec!(25))).unwrap_or_else(|e| panic!("{e}"));
         let closed = ws_core::fixtures::quote(dec!(121.4), MarketStatus::Closed);
-        ledger.place(&order, &IdempotencyKey::fresh(), &closed, cad(dec!(1000)), now()).unwrap_or_else(|e| panic!("{e}"));
+        ledger
+            .place(&order, &IdempotencyKey::fresh(), &closed, cad(dec!(1000)), now())
+            .unwrap_or_else(|e| panic!("{e}"));
         ledger.sweep(&HashMap::new(), cad(dec!(1000)), now() + Duration::days(3));
         assert_eq!(ledger.pending(&account()).len(), 1, "market orders do not lapse");
         ledger.sweep(&HashMap::from([(security(), quote(dec!(121.4)))]), cad(dec!(1000)), now() + Duration::days(3));
@@ -243,14 +272,21 @@ mod tests {
     fn reports_orders_through_to_how_they_ended() {
         let mut ledger = Ledger::default();
         let filled = IdempotencyKey::fresh();
-        ledger.place(&buy(dec!(2), dec!(30)), &filled, &quote(dec!(40)), cad(dec!(1000)), now()).unwrap_or_else(|e| panic!("{e}"));
+        ledger
+            .place(&buy(dec!(2), dec!(30)), &filled, &quote(dec!(40)), cad(dec!(1000)), now())
+            .unwrap_or_else(|e| panic!("{e}"));
         assert_eq!(ledger.report(&filled).map(|r| r.status()), Some(Status::Placed));
         ledger.sweep(&HashMap::from([(security(), quote(dec!(29)))]), cad(dec!(1000)), now());
         let report = ledger.report(&filled).unwrap_or_else(|| panic!("no report"));
-        assert_eq!((report.status(), report.filled().map(|q| q.value()), report.average()), (Status::Filled, Some(dec!(2)), Some(cad(dec!(29)))));
+        assert_eq!(
+            (report.status(), report.filled().map(|q| q.value()), report.average()),
+            (Status::Filled, Some(dec!(2)), Some(cad(dec!(29))))
+        );
 
         let cancelled = IdempotencyKey::fresh();
-        ledger.place(&buy(dec!(1), dec!(10)), &cancelled, &quote(dec!(40)), cad(dec!(1000)), now()).unwrap_or_else(|e| panic!("{e}"));
+        ledger
+            .place(&buy(dec!(1), dec!(10)), &cancelled, &quote(dec!(40)), cad(dec!(1000)), now())
+            .unwrap_or_else(|e| panic!("{e}"));
         ledger.cancel(&cancelled, now());
         assert_eq!(ledger.report(&cancelled).map(|r| r.status()), Some(Status::Cancelled));
         assert!(ledger.report(&IdempotencyKey::fresh()).is_none());
@@ -271,7 +307,9 @@ mod tests {
     fn day_orders_lapse_and_cancels_are_recorded() {
         let mut ledger = Ledger::default();
         let kept = IdempotencyKey::fresh();
-        ledger.place(&buy(dec!(1), dec!(30)).good_till_cancelled(), &kept, &quote(dec!(40)), cad(dec!(1000)), now()).unwrap_or_else(|e| panic!("{e}"));
+        ledger
+            .place(&buy(dec!(1), dec!(30)).good_till_cancelled(), &kept, &quote(dec!(40)), cad(dec!(1000)), now())
+            .unwrap_or_else(|e| panic!("{e}"));
         place(&mut ledger, &buy(dec!(1), dec!(30)), dec!(40)).unwrap_or_else(|e| panic!("{e}"));
         ledger.sweep(&HashMap::new(), cad(dec!(1000)), now() + Duration::days(1));
         assert_eq!(ledger.history(&account(), 1)[0].status(), Some("EXPIRED"));

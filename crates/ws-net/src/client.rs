@@ -54,10 +54,7 @@ impl Client {
             if let Some(body) = body {
                 request = request.json(body);
             }
-            let response = request
-                .send()
-                .await
-                .map_err(|source| Error::Transport { url: url.to_owned(), source })?;
+            let response = request.send().await.map_err(|source| Error::Transport { url: url.to_owned(), source })?;
             let status = response.status();
             if attempt == 0 && matches!(status, StatusCode::TOO_MANY_REQUESTS | StatusCode::SERVICE_UNAVAILABLE) {
                 attempt += 1;
@@ -142,7 +139,11 @@ mod tests {
             .await;
 
         let response = client()
-            .post(&format!("{}/token", server.uri()), &Headers::new().session("s-1"), &json!({"grant_type": "password"}))
+            .post(
+                &format!("{}/token", server.uri()),
+                &Headers::new().session("s-1"),
+                &json!({"grant_type": "password"}),
+            )
             .await
             .unwrap_or_else(|e| panic!("{e}"));
 
@@ -154,11 +155,7 @@ mod tests {
     #[tokio::test]
     async fn retries_once_on_429() {
         let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .respond_with(ResponseTemplate::new(429))
-            .up_to_n_times(1)
-            .mount(&server)
-            .await;
+        Mock::given(method("GET")).respond_with(ResponseTemplate::new(429)).up_to_n_times(1).mount(&server).await;
         Mock::given(method("GET")).respond_with(ResponseTemplate::new(200)).mount(&server).await;
 
         let response = client().get(&server.uri(), &Headers::new()).await.unwrap_or_else(|e| panic!("{e}"));
@@ -168,7 +165,10 @@ mod tests {
     #[tokio::test]
     async fn returns_non_success_responses_to_the_caller() {
         let server = MockServer::start().await;
-        Mock::given(method("GET")).respond_with(ResponseTemplate::new(401).set_body_string("nope")).mount(&server).await;
+        Mock::given(method("GET"))
+            .respond_with(ResponseTemplate::new(401).set_body_string("nope"))
+            .mount(&server)
+            .await;
 
         let response = client().get(&server.uri(), &Headers::new()).await.unwrap_or_else(|e| panic!("{e}"));
         assert_eq!((response.status(), response.text()), (401, "nope"));

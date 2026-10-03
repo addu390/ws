@@ -10,7 +10,8 @@ pub async fn account(reader: &dyn Reader, name: &str) -> Result<AccountId, Failu
         return Ok(account.id().clone());
     }
     let wanted = normalize(name);
-    let named: Vec<&Account> = accounts.iter().filter(|a| a.nickname().is_some_and(|n| normalize(n) == wanted)).collect();
+    let named: Vec<&Account> =
+        accounts.iter().filter(|a| a.nickname().is_some_and(|n| normalize(n) == wanted)).collect();
     let matches = if named.is_empty() {
         accounts.iter().filter(|a| normalize(&a.registration().to_string()) == wanted).collect()
     } else {
@@ -83,9 +84,7 @@ fn normalize(name: &str) -> String {
 mod tests {
     use async_trait::async_trait;
     use ws_broker::Error;
-    use ws_core::{
-        Activity, Currency, IdempotencyKey, Management, Placed, Position, Quote, Registration, Report,
-    };
+    use ws_core::{Activity, Currency, IdempotencyKey, Management, Placed, Position, Quote, Registration, Report};
 
     use super::*;
 

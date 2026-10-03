@@ -1,6 +1,8 @@
 use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
-use ws_core::{AccountId, Activity, IdempotencyKey, Kind, Order, OrderId, Placed, Report, SecurityId, Side, Status, Tif};
+use ws_core::{
+    AccountId, Activity, IdempotencyKey, Kind, Order, OrderId, Placed, Report, SecurityId, Side, Status, Tif,
+};
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub(crate) struct Resting {
@@ -28,8 +30,15 @@ impl Resting {
 
     pub(crate) fn placed(&self) -> Placed {
         let order = &self.order;
-        let placed = Placed::new(self.id.clone(), order.account().clone(), order.security().clone(), order.side(), Status::Placed, self.placed)
-            .with_key(self.key.clone());
+        let placed = Placed::new(
+            self.id.clone(),
+            order.account().clone(),
+            order.security().clone(),
+            order.side(),
+            Status::Placed,
+            self.placed,
+        )
+        .with_key(self.key.clone());
         let placed = match order.shares() {
             Some(quantity) => placed.with_quantity(quantity),
             None => placed,
@@ -43,8 +52,9 @@ impl Resting {
 
     pub(crate) fn report(&self, status: Status) -> Report {
         let order = &self.order;
-        let report = Report::new(self.key.clone(), order.account().clone(), order.security().clone(), order.side(), status)
-            .with_submitted(self.placed);
+        let report =
+            Report::new(self.key.clone(), order.account().clone(), order.security().clone(), order.side(), status)
+                .with_submitted(self.placed);
         let report = match order.shares() {
             Some(quantity) => report.with_quantity(quantity),
             None => report,

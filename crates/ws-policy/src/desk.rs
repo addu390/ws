@@ -29,7 +29,8 @@ impl Desk {
         let mut tickets = Vec::new();
         for entry in entries.flatten() {
             let name = entry.file_name();
-            let Some(id) = name.to_str().and_then(|n| n.strip_suffix(".json")).and_then(|n| TicketId::parse(n).ok()) else {
+            let Some(id) = name.to_str().and_then(|n| n.strip_suffix(".json")).and_then(|n| TicketId::parse(n).ok())
+            else {
                 continue;
             };
             if let Some(ticket) = self.get(&id)? {
@@ -39,7 +40,7 @@ impl Desk {
         Ok(tickets)
     }
 
-/// The rename is what makes a ticket single use across processes.
+    /// The rename is what makes a ticket single use across processes.
     pub(crate) fn take(&self, id: &TicketId) -> Result<Option<Ticket>, Error> {
         let (filed, claimed) = (self.path(id, "json"), self.path(id, "taken"));
         match std::fs::rename(&filed, &claimed) {

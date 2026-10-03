@@ -55,7 +55,13 @@ pub fn api() -> anyhow::Result<Arc<Api>> {
     Ok(Arc::new(Api::new(Client::chrome()?, session, store)))
 }
 
-fn guard(broker: Arc<dyn Broker>, config: &Config, home: &Home, dir: &Path, clock: Arc<dyn Clock>) -> anyhow::Result<Arc<Guard>> {
+fn guard(
+    broker: Arc<dyn Broker>,
+    config: &Config,
+    home: &Home,
+    dir: &Path,
+    clock: Arc<dyn Clock>,
+) -> anyhow::Result<Arc<Guard>> {
     let journal = Arc::new(ws_audit::File::open(home.audit())?);
     Ok(Arc::new(Guard::new(broker, config, journal, Kill::new(home.kill()), dir, clock)))
 }
