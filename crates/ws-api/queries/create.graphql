@@ -1,0 +1,15 @@
+mutation SoOrdersOrderCreate($input: SoOrders_CreateOrderInput!) {
+  soOrdersCreateOrder(input: $input) {
+    errors {
+      code
+      message
+      __typename
+    }
+    order {
+      orderId
+      createdAt
+      __typename
+    }
+    __typename
+  }
+}

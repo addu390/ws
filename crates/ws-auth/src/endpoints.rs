@@ -1,5 +1,3 @@
-//! Where the login page and OAuth API live.
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Endpoints {
     login: String,
@@ -15,7 +13,6 @@ impl Endpoints {
         }
     }
 
-    /// Everything under one base URL, for tests against a mock server.
     #[must_use]
     pub fn at(base: &str) -> Self {
         let base = base.trim_end_matches('/');
@@ -37,7 +34,6 @@ impl Endpoints {
         format!("{}/token/info", self.oauth)
     }
 
-    /// Resolves a script `src` found on the login page, which may be relative.
     #[must_use]
     pub fn resolve(&self, src: &str) -> String {
         if src.starts_with("http://") || src.starts_with("https://") {

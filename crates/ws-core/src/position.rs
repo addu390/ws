@@ -1,5 +1,3 @@
-//! Holdings within an account.
-
 use serde::{Deserialize, Serialize};
 
 use crate::{AccountId, Money, Quantity, Security};

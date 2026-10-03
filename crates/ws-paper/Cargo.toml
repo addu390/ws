@@ -12,3 +12,14 @@ workspace = true
 [dependencies]
 ws-core.workspace = true
 ws-broker.workspace = true
+ws-common.workspace = true
+
+async-trait.workspace = true
+chrono.workspace = true
+rust_decimal.workspace = true
+serde.workspace = true
+
+[dev-dependencies]
+ws-common = { workspace = true, features = ["fixtures"] }
+ws-core = { workspace = true, features = ["fixtures"] }
+tokio.workspace = true

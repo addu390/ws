@@ -11,10 +11,14 @@ workspace = true
 
 [dependencies]
 chrono.workspace = true
+chrono-tz.workspace = true
 rust_decimal.workspace = true
 serde.workspace = true
 thiserror.workspace = true
 uuid.workspace = true
+
+[features]
+fixtures = []
 
 [dev-dependencies]
 serde_json.workspace = true

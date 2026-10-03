@@ -1,5 +1,3 @@
-//! Session, device, and bearer headers sent on every Wealthsimple request.
-
 use wreq::header::{AUTHORIZATION, HeaderMap, HeaderName, HeaderValue};
 
 use crate::Error;

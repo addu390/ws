@@ -1,5 +1,3 @@
-//! Tradable securities.
-
 use serde::{Deserialize, Serialize};
 
 use crate::SecurityId;

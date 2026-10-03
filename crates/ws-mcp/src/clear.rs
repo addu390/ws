@@ -1,19 +1,22 @@
-//! Removes everything ws-mcp stores on this machine.
-
 use ws_auth::{Browser, Keyring, Store};
 
-pub fn run() -> anyhow::Result<()> {
+use crate::home::Home;
+
+pub fn logout() -> anyhow::Result<()> {
     Keyring::default().clear()?;
-    eprintln!("Removed the stored session from the system keychain.");
-
-    match Browser::purge_leftovers()? {
-        0 => {}
-        n => eprintln!("Removed {n} leftover browser login profile(s)."),
-    }
-
+    Browser::purge_leftovers()?;
     eprintln!(
-        "Nothing from ws-mcp remains on this machine. Wealthsimple may still list this login as an active \
-         session or remembered device; remove it in Wealthsimple's security settings to end it there too."
+        "Logged out. Wealthsimple may still list this login as an active session or remembered device. \
+         Remove it in Wealthsimple's security settings to end it there too."
     );
     Ok(())
+}
+
+pub fn run() -> anyhow::Result<()> {
+    let home = Home::locate()?;
+    ws_common::remove(&home.audit())?;
+    ws_common::remove_dir(&home.paper())?;
+    ws_common::remove_dir(&home.trade())?;
+    eprintln!("Removed the audit log, tickets, budgets, and paper ledger. Your config and kill switch are kept.");
+    logout()
 }

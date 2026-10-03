@@ -11,3 +11,12 @@ workspace = true
 
 [dependencies]
 ws-core.workspace = true
+ws-common.workspace = true
+
+rust_decimal.workspace = true
+serde.workspace = true
+thiserror.workspace = true
+toml.workspace = true
+
+[dev-dependencies]
+ws-common = { workspace = true, features = ["fixtures"] }

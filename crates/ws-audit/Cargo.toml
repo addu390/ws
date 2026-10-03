@@ -11,3 +11,14 @@ workspace = true
 
 [dependencies]
 ws-core.workspace = true
+ws-common.workspace = true
+
+chrono.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+
+[dev-dependencies]
+ws-common = { workspace = true, features = ["fixtures"] }
+ws-core = { workspace = true, features = ["fixtures"] }
+rust_decimal.workspace = true

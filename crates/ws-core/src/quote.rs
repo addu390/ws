@@ -1,5 +1,3 @@
-//! Price quotes and market status.
-
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 

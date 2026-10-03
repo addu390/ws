@@ -1,5 +1,3 @@
-//! Errors raised by domain constructors.
-
 use rust_decimal::Decimal;
 
 #[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
@@ -18,4 +16,6 @@ pub enum Error {
     NonPositiveQuantity(Decimal),
     #[error("price must be positive, got {0}")]
     NonPositivePrice(Decimal),
+    #[error("order value must be positive, got {0}")]
+    NonPositiveValue(Decimal),
 }

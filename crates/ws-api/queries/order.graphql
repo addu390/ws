@@ -1,0 +1,41 @@
+query FetchSoOrdersExtendedOrder($branchId: String!, $externalId: String!) {
+  soOrdersExtendedOrder(branchId: $branchId, externalId: $externalId) {
+    ...SoOrdersExtendedOrder
+    __typename
+  }
+}
+
+fragment SoOrdersExtendedOrder on SoOrders_ExtendedOrderResponse {
+  averageFilledPrice
+  filledExchangeRate
+  filledQuantity
+  filledCommissionFee
+  filledTotalFee
+  firstFilledAtUtc
+  lastFilledAtUtc
+  limitPrice
+  cashImpact
+  openClose
+  orderType
+  optionMultiplier
+  rejectionCause
+  rejectionCode
+  securityCurrency
+  status
+  stopPrice
+  submittedAtUtc
+  submittedExchangeRate
+  submittedNetValue
+  submittedQuantity
+  submittedTotalFee
+  timeInForce
+  accountId
+  canonicalAccountId
+  cancellationCutoff
+  tradingSession
+  expiredAtUtc
+  securityId
+  identityId
+  actorRelationship
+  __typename
+}

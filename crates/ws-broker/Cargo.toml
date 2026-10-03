@@ -1,6 +1,6 @@
 [package]
 name = "ws-broker"
-description = "Broker traits and the live Wealthsimple adapter"
+description = "The broker contract: Reader and Broker traits"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -11,4 +11,5 @@ workspace = true
 
 [dependencies]
 ws-core.workspace = true
-ws-api.workspace = true
+async-trait.workspace = true
+thiserror.workspace = true

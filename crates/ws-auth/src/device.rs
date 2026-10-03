@@ -1,5 +1,3 @@
-//! Unauthenticated bootstrap of the device id (`wssdi` cookie) and the OAuth client id.
-
 use std::sync::LazyLock;
 
 use regex::Regex;
@@ -20,16 +18,6 @@ pub struct Device {
 }
 
 impl Device {
-    /// Loads the web app's login page like a browser would, to obtain the identifiers
-    /// Wealthsimple expects on every subsequent request.
-    pub async fn bootstrap(client: &Client, endpoints: &Endpoints) -> Result<Self, Error> {
-        let page = login_page(client, endpoints).await?;
-        let device_id = page.cookie("wssdi").ok_or(Error::Bootstrap("no wssdi cookie on the login page"))?.to_owned();
-        let client_id = scrape_client_id(client, endpoints, page.text()).await?;
-        tracing::debug!("bootstrapped device");
-        Ok(Self { device_id, client_id })
-    }
-
     /// Keeps a device id issued to a real browser, since its tokens may be bound to it.
     pub(crate) async fn adopt(device_id: String, client: &Client, endpoints: &Endpoints) -> Result<Self, Error> {
         let page = login_page(client, endpoints).await?;
@@ -92,14 +80,12 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn bootstraps_from_login_page() {
+    async fn adopts_a_browser_device_with_the_app_client_id() {
         let server = MockServer::start().await;
         Mock::given(method("GET"))
             .and(path("/app/login"))
             .respond_with(
-                ResponseTemplate::new(200)
-                    .insert_header("set-cookie", "wssdi=d3v1ce; Path=/")
-                    .set_body_string(r#"<script src="/static/app-abc123.js"></script>"#),
+                ResponseTemplate::new(200).set_body_string(r#"<script src="/static/app-abc123.js"></script>"#),
             )
             .mount(&server)
             .await;
@@ -110,15 +96,16 @@ mod tests {
             .await;
 
         let client = Client::chrome().unwrap_or_else(|e| panic!("{e}"));
-        let device = Device::bootstrap(&client, &Endpoints::at(&server.uri())).await.unwrap_or_else(|e| panic!("{e}"));
+        let endpoints = Endpoints::at(&server.uri());
+        let device = Device::adopt("d3v1ce".into(), &client, &endpoints).await.unwrap_or_else(|e| panic!("{e}"));
         assert_eq!((device.device_id(), device.client_id()), ("d3v1ce", "c11e47"));
     }
 
     #[tokio::test]
-    #[ignore = "hits the real Wealthsimple login page; run with --ignored"]
-    async fn bootstraps_against_production() {
+    #[ignore = "hits the real Wealthsimple login page, run with --ignored"]
+    async fn finds_the_client_id_in_production() {
         let client = Client::chrome().unwrap_or_else(|e| panic!("{e}"));
-        let device = Device::bootstrap(&client, &Endpoints::production()).await.unwrap_or_else(|e| panic!("{e}"));
+        let device = Device::adopt("d".into(), &client, &Endpoints::production()).await.unwrap_or_else(|e| panic!("{e}"));
         assert!(!device.device_id().is_empty() && !device.client_id().is_empty());
     }
 }

@@ -1,5 +1,3 @@
-//! Transport errors.
-
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error("could not build HTTP client: {0}")]

@@ -1,0 +1,174 @@
+query OrderServiceExtendedOrderFeed($identityId: ID!, $statuses: [OrderServiceOrderStatus!]!, $first: Int = 25, $cursor: String) {
+  identity(id: $identityId) {
+    id
+    orderServiceExtendedOrderFeed(
+      statuses: $statuses
+      first: $first
+      after: $cursor
+    ) {
+      edges {
+        cursor
+        node {
+          ...OrderFeedRow
+          __typename
+        }
+        __typename
+      }
+      pageInfo {
+        endCursor
+        hasNextPage
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+}
+
+fragment OrderFeedRow on OrderServiceExtendedOrder {
+  id
+  orderId
+  canonicalAccountId
+  createdAtUtc
+  status
+  orderClass
+  orderBatchType
+  side
+  openClose
+  executionType
+  submittedQuantity
+  limitPrice
+  stopPrice
+  averageFillPrice
+  securityCurrency
+  securityId
+  symbol
+  bracket {
+    groupId
+    legRole
+    activationOrderId
+    combinationMode
+    expiresAtUtc
+    condition {
+      type
+      direction
+      threshold
+      trailingAmount
+      trailingPercentBps
+      __typename
+    }
+    __typename
+  }
+  security {
+    ...OrderFeedRowSecurity
+    __typename
+  }
+  __typename
+}
+
+fragment OrderFeedRowSecurity on Security {
+  id
+  securityType
+  currency
+  features
+  logo
+  logoUrl
+  stock {
+    symbol
+    name
+    __typename
+  }
+  optionDetails {
+    optionType
+    strikePrice
+    expiryDate
+    settlementTime
+    underlyingSecurity {
+      id
+      securityType
+      __typename
+    }
+    __typename
+  }
+  quoteV2(currency: null) {
+    ...SecurityQuoteV2
+    __typename
+  }
+  __typename
+}
+
+fragment SecurityQuoteV2 on UnifiedQuote {
+  ...StreamedSecurityQuoteV2
+  previousBaseline
+  __typename
+}
+
+fragment StreamedSecurityQuoteV2 on UnifiedQuote {
+  __typename
+  securityId
+  ask
+  bid
+  currency
+  price
+  sessionPrice
+  quotedAsOf
+  ... on EquityQuote {
+    marketStatus
+    askSize
+    bidSize
+    close
+    high
+    last
+    lastSize
+    low
+    open
+    mid
+    volume: vol
+    referenceClose
+    __typename
+  }
+  ... on OptionQuote {
+    marketStatus
+    askSize
+    bidSize
+    close
+    high
+    last
+    lastSize
+    low
+    open
+    mid
+    volume: vol
+    breakEven
+    inTheMoney
+    liquidityStatus
+    openInterest
+    underlyingSpot
+    __typename
+  }
+  ... on FutureQuote {
+    marketStatus
+    askSize
+    bidSize
+    close
+    high
+    last
+    lastSize
+    low
+    open
+    mid
+    volume: vol
+    openInterest
+    settlementPrice
+    __typename
+  }
+  ... on PerpetualFutureQuote {
+    perpOpenInterest: openInterest
+    volume: vol
+    settlementMark {
+      assetPrice
+      __typename
+    }
+    __typename
+  }
+}

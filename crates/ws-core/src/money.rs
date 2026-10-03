@@ -1,5 +1,3 @@
-//! Currency-safe monetary amounts.
-
 use std::fmt;
 use std::str::FromStr;
 
@@ -8,7 +6,6 @@ use serde::{Deserialize, Serialize};
 
 use crate::Error;
 
-/// Sub-dollar securities quote to four decimal places.
 pub(crate) const MAX_SCALE: u32 = 4;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -94,7 +91,6 @@ impl Money {
         Ok(Self { amount, currency: self.currency })
     }
 
-    /// Multiplies by a quantity, rounding to cents.
     pub fn times(self, factor: Decimal) -> Result<Self, Error> {
         let amount = self.amount.checked_mul(factor).ok_or(Error::Overflow)?.round_dp(2);
         Ok(Self { amount, currency: self.currency })
@@ -139,11 +135,8 @@ impl From<Money> for Raw {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::fixtures::{cad, usd};
     use rust_decimal::dec;
-
-    fn cad(amount: Decimal) -> Money {
-        Money::new(amount, Currency::Cad).unwrap_or_else(|e| panic!("{e}"))
-    }
 
     #[test]
     fn rejects_excess_precision() {
@@ -158,8 +151,7 @@ mod tests {
 
     #[test]
     fn refuses_mixed_currencies() {
-        let usd = Money::new(dec!(1), Currency::Usd).unwrap_or_else(|e| panic!("{e}"));
-        assert!(matches!(cad(dec!(1)).checked_add(usd), Err(Error::CurrencyMismatch { .. })));
+        assert!(matches!(cad(dec!(1)).checked_add(usd(dec!(1))), Err(Error::CurrencyMismatch { .. })));
     }
 
     #[test]

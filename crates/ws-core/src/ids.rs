@@ -1,5 +1,3 @@
-//! Typed identifiers for accounts, securities, orders, identities, and idempotency keys.
-
 use std::fmt;
 
 use serde::{Deserialize, Serialize};
@@ -27,6 +25,14 @@ macro_rules! id {
             #[must_use]
             pub fn as_str(&self) -> &str {
                 &self.0
+            }
+        }
+
+        impl std::str::FromStr for $name {
+            type Err = Error;
+
+            fn from_str(raw: &str) -> Result<Self, Error> {
+                Self::parse(raw)
             }
         }
 
@@ -59,7 +65,7 @@ id!(IdentityId, "identity", |raw| raw.starts_with("identity-"));
 id!(IdempotencyKey, "idempotency key", |raw| raw.starts_with("order-"));
 
 impl IdempotencyKey {
-    /// Sent to Wealthsimple as the order's `externalId`; reusing it makes a retry a no-op.
+/// Sent to Wealthsimple as the order's `externalId`, so a retry with the same key is a no-op.
     #[must_use]
     pub fn fresh() -> Self {
         Self(format!("order-{}", Uuid::new_v4()))

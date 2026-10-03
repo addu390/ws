@@ -1,8 +1,8 @@
-//! Accounts and their kinds.
+use std::fmt;
 
 use serde::{Deserialize, Serialize};
 
-use crate::{AccountId, Currency};
+use crate::{AccountId, Currency, Valuation};
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -19,7 +19,29 @@ pub enum Registration {
     Cash,
     Crypto,
     CreditCard,
+    LineOfCredit,
     Other(String),
+}
+
+impl fmt::Display for Registration {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(match self {
+            Self::Tfsa => "TFSA",
+            Self::Rrsp => "RRSP",
+            Self::SpousalRrsp => "Spousal RRSP",
+            Self::Fhsa => "FHSA",
+            Self::Resp => "RESP",
+            Self::Rrif => "RRIF",
+            Self::Lira => "LIRA",
+            Self::NonRegistered => "Non-registered",
+            Self::Margin => "Margin",
+            Self::Cash => "Cash",
+            Self::Crypto => "Crypto",
+            Self::CreditCard => "Credit card",
+            Self::LineOfCredit => "Line of credit",
+            Self::Other(name) => name,
+        })
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -27,6 +49,7 @@ pub enum Registration {
 pub enum Management {
     SelfDirected,
     Managed,
+    Automated,
     Neither,
 }
 
@@ -37,17 +60,24 @@ pub struct Account {
     management: Management,
     currency: Currency,
     nickname: Option<String>,
+    valuation: Option<Valuation>,
 }
 
 impl Account {
     #[must_use]
     pub fn new(id: AccountId, registration: Registration, management: Management, currency: Currency) -> Self {
-        Self { id, registration, management, currency, nickname: None }
+        Self { id, registration, management, currency, nickname: None, valuation: None }
     }
 
     #[must_use]
     pub fn named(mut self, nickname: impl Into<String>) -> Self {
         self.nickname = Some(nickname.into());
+        self
+    }
+
+    #[must_use]
+    pub fn valued(mut self, valuation: Valuation) -> Self {
+        self.valuation = Some(valuation);
         self
     }
 
@@ -76,7 +106,11 @@ impl Account {
         self.nickname.as_deref()
     }
 
-    /// Only self-directed accounts accept orders through this API.
+    #[must_use]
+    pub fn valuation(&self) -> Option<&Valuation> {
+        self.valuation.as_ref()
+    }
+
     #[must_use]
     pub fn tradable(&self) -> bool {
         self.management == Management::SelfDirected

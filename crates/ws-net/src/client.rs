@@ -1,5 +1,3 @@
-//! HTTP client emulating Chrome's TLS and HTTP/2 fingerprint, required to pass Cloudflare.
-
 use std::time::Duration;
 
 use serde::Serialize;
@@ -42,8 +40,6 @@ impl Client {
         self.send(Method::POST, url, headers, Some(body)).await
     }
 
-    /// Retries once when the server refused the request outright (429 or 503),
-    /// which means it was never processed and is safe to repeat.
     async fn send<B: Serialize + ?Sized>(
         &self,
         method: Method,

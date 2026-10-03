@@ -1,0 +1,23 @@
+query FetchSecurityQuoteV2($id: ID!, $currency: Currency) {
+  security(id: $id) {
+    id
+    stock {
+      symbol
+      name
+      primaryExchange
+      __typename
+    }
+    quoteV2(currency: $currency) {
+      __typename
+      securityId
+      price
+      currency
+      quotedAsOf
+      ... on EquityQuote {
+        marketStatus
+        __typename
+      }
+    }
+    __typename
+  }
+}

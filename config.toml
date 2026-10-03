@@ -10,6 +10,7 @@ market_hours_only = true
 allowed_accounts = []
 blocked_securities = []
 require_approval_above = "250.00"
+approve_in_chat = false
 
 [paper]
 starting_cash = "10000.00"

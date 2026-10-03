@@ -1,5 +1,3 @@
-//! Account activity feed items: trades, deposits, dividends, and so on.
-
 use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
@@ -36,27 +34,27 @@ impl Activity {
     }
 
     #[must_use]
-    pub fn subkind(mut self, subkind: impl Into<String>) -> Self {
+    pub fn with_subkind(mut self, subkind: impl Into<String>) -> Self {
         self.subkind = Some(subkind.into());
         self
     }
 
     #[must_use]
-    pub fn status(mut self, status: impl Into<String>) -> Self {
+    pub fn with_status(mut self, status: impl Into<String>) -> Self {
         self.status = Some(status.into());
         self
     }
 
     #[must_use]
-    pub fn amount(mut self, amount: Money) -> Self {
+    pub fn with_amount(mut self, amount: Money) -> Self {
         self.amount = Some(amount);
         self
     }
 
     #[must_use]
-    pub fn asset(mut self, symbol: impl Into<String>, quantity: Decimal) -> Self {
+    pub fn with_asset(mut self, symbol: impl Into<String>, quantity: Option<Decimal>) -> Self {
         self.symbol = Some(symbol.into());
-        self.quantity = Some(quantity);
+        self.quantity = quantity;
         self
     }
 
@@ -76,7 +74,32 @@ impl Activity {
     }
 
     #[must_use]
+    pub fn subkind(&self) -> Option<&str> {
+        self.subkind.as_deref()
+    }
+
+    #[must_use]
+    pub fn status(&self) -> Option<&str> {
+        self.status.as_deref()
+    }
+
+    #[must_use]
     pub fn occurred(&self) -> DateTime<Utc> {
         self.occurred
+    }
+
+    #[must_use]
+    pub fn amount(&self) -> Option<Money> {
+        self.amount
+    }
+
+    #[must_use]
+    pub fn symbol(&self) -> Option<&str> {
+        self.symbol.as_deref()
+    }
+
+    #[must_use]
+    pub fn quantity(&self) -> Option<Decimal> {
+        self.quantity
     }
 }

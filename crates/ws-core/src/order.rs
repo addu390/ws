@@ -1,9 +1,10 @@
-//! Order intents: side, quantity, execution kind, and time in force.
-
-use rust_decimal::Decimal;
+use rust_decimal::{Decimal, RoundingStrategy};
 use serde::{Deserialize, Serialize};
 
 use crate::{AccountId, Error, Money, Quote, SecurityId};
+
+const FRACTION_SCALE: u32 = 4;
+const VALUE_SCALE: u32 = 2;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(try_from = "Decimal", into = "Decimal")]
@@ -46,6 +47,13 @@ pub enum Side {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum Size {
+    Shares(Quantity),
+    Value(Money),
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case", tag = "type")]
 pub enum Kind {
     Market,
@@ -66,7 +74,7 @@ pub struct Order {
     account: AccountId,
     security: SecurityId,
     side: Side,
-    quantity: Quantity,
+    size: Size,
     kind: Kind,
     tif: Tif,
 }
@@ -74,22 +82,32 @@ pub struct Order {
 impl Order {
     #[must_use]
     pub fn market_buy(account: AccountId, security: SecurityId, quantity: Quantity) -> Self {
-        Self::build(account, security, Side::Buy, quantity, Kind::Market)
+        Self::build(account, security, Side::Buy, Size::Shares(quantity), Kind::Market)
     }
 
     #[must_use]
     pub fn market_sell(account: AccountId, security: SecurityId, quantity: Quantity) -> Self {
-        Self::build(account, security, Side::Sell, quantity, Kind::Market)
+        Self::build(account, security, Side::Sell, Size::Shares(quantity), Kind::Market)
+    }
+
+    pub fn value_buy(account: AccountId, security: SecurityId, value: Money) -> Result<Self, Error> {
+        if !value.is_positive() {
+            return Err(Error::NonPositiveValue(value.amount()));
+        }
+        if value.amount().scale() > VALUE_SCALE {
+            return Err(Error::TooPrecise(value.amount()));
+        }
+        Ok(Self::build(account, security, Side::Buy, Size::Value(value), Kind::Market))
     }
 
     pub fn limit_buy(account: AccountId, security: SecurityId, quantity: Quantity, limit: Money) -> Result<Self, Error> {
         positive(limit)?;
-        Ok(Self::build(account, security, Side::Buy, quantity, Kind::Limit { limit }))
+        Ok(Self::build(account, security, Side::Buy, Size::Shares(quantity), Kind::Limit { limit }))
     }
 
     pub fn limit_sell(account: AccountId, security: SecurityId, quantity: Quantity, limit: Money) -> Result<Self, Error> {
         positive(limit)?;
-        Ok(Self::build(account, security, Side::Sell, quantity, Kind::Limit { limit }))
+        Ok(Self::build(account, security, Side::Sell, Size::Shares(quantity), Kind::Limit { limit }))
     }
 
     pub fn stop_limit_sell(
@@ -101,7 +119,7 @@ impl Order {
     ) -> Result<Self, Error> {
         positive(stop)?;
         positive(limit)?;
-        Ok(Self::build(account, security, Side::Sell, quantity, Kind::StopLimit { stop, limit }))
+        Ok(Self::build(account, security, Side::Sell, Size::Shares(quantity), Kind::StopLimit { stop, limit }))
     }
 
     #[must_use]
@@ -110,8 +128,8 @@ impl Order {
         self
     }
 
-    fn build(account: AccountId, security: SecurityId, side: Side, quantity: Quantity, kind: Kind) -> Self {
-        Self { account, security, side, quantity, kind, tif: Tif::Day }
+    fn build(account: AccountId, security: SecurityId, side: Side, amount: Size, kind: Kind) -> Self {
+        Self { account, security, side, size: amount, kind, tif: Tif::Day }
     }
 
     #[must_use]
@@ -130,8 +148,29 @@ impl Order {
     }
 
     #[must_use]
-    pub fn quantity(&self) -> Quantity {
-        self.quantity
+    pub fn size(&self) -> Size {
+        self.size
+    }
+
+    #[must_use]
+    pub fn shares(&self) -> Option<Quantity> {
+        match self.size {
+            Size::Shares(quantity) => Some(quantity),
+            Size::Value(_) => None,
+        }
+    }
+
+    pub fn shares_at(&self, price: Money) -> Result<Quantity, Error> {
+        match self.size {
+            Size::Shares(quantity) => Ok(quantity),
+            Size::Value(value) => {
+                if value.currency() != price.currency() {
+                    return Err(Error::CurrencyMismatch { left: value.currency().code(), right: price.currency().code() });
+                }
+                let shares = value.amount().checked_div(price.amount()).ok_or(Error::Overflow)?;
+                Quantity::new(shares.round_dp_with_strategy(FRACTION_SCALE, RoundingStrategy::ToZero))
+            }
+        }
     }
 
     #[must_use]
@@ -144,13 +183,16 @@ impl Order {
         self.tif
     }
 
-    /// Estimated value: the limit price when set, otherwise the quote.
     pub fn notional(&self, quote: &Quote) -> Result<Money, Error> {
+        let quantity = match self.size {
+            Size::Value(value) => return Ok(value),
+            Size::Shares(quantity) => quantity,
+        };
         let price = match self.kind {
             Kind::Market => quote.price(),
             Kind::Limit { limit } | Kind::StopLimit { limit, .. } => limit,
         };
-        price.times(self.quantity.value())
+        price.times(quantity.value())
     }
 }
 
@@ -161,22 +203,12 @@ fn positive(price: Money) -> Result<(), Error> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{Currency, MarketStatus};
-    use chrono::Utc;
+    use crate::MarketStatus;
+    use crate::fixtures::{account, cad, quantity as qty, quote, security, usd};
     use rust_decimal::dec;
 
-    fn cad(amount: Decimal) -> Money {
-        Money::new(amount, Currency::Cad).unwrap_or_else(|e| panic!("{e}"))
-    }
-
     fn ids() -> (AccountId, SecurityId) {
-        let account = AccountId::parse("tfsa-abc").unwrap_or_else(|e| panic!("{e}"));
-        let security = SecurityId::parse("sec-s-xeqt").unwrap_or_else(|e| panic!("{e}"));
-        (account, security)
-    }
-
-    fn qty(value: Decimal) -> Quantity {
-        Quantity::new(value).unwrap_or_else(|e| panic!("{e}"))
+        (account(), security())
     }
 
     #[test]
@@ -195,7 +227,7 @@ mod tests {
     #[test]
     fn notional_uses_limit_over_quote() {
         let (account, security) = ids();
-        let quote = Quote::new(security.clone(), cad(dec!(40)), Utc::now(), MarketStatus::Open);
+        let quote = quote(dec!(40), MarketStatus::Open);
         let limit = Order::limit_buy(account.clone(), security.clone(), qty(dec!(3)), cad(dec!(35.10)))
             .unwrap_or_else(|e| panic!("{e}"));
         assert_eq!(limit.notional(&quote), Ok(cad(dec!(105.30))));
@@ -209,5 +241,24 @@ mod tests {
         let order = Order::market_sell(account, security, qty(dec!(1)));
         assert_eq!(order.tif(), Tif::Day);
         assert_eq!(order.good_till_cancelled().tif(), Tif::Gtc);
+    }
+
+    #[test]
+    fn value_buys_take_positive_whole_cents() {
+        let (account, security) = ids();
+        assert_eq!(Order::value_buy(account.clone(), security.clone(), cad(dec!(0))), Err(Error::NonPositiveValue(dec!(0))));
+        assert_eq!(Order::value_buy(account.clone(), security.clone(), cad(dec!(1.005))), Err(Error::TooPrecise(dec!(1.005))));
+        let order = Order::value_buy(account, security, cad(dec!(25))).unwrap_or_else(|e| panic!("{e}"));
+        assert_eq!((order.side(), order.kind(), order.shares()), (Side::Buy, Kind::Market, None));
+        assert_eq!(order.notional(&quote(dec!(121.4), MarketStatus::Open)), Ok(cad(dec!(25))));
+    }
+
+    #[test]
+    fn value_buys_round_fractional_shares_down() {
+        let (account, security) = ids();
+        let order = Order::value_buy(account, security, cad(dec!(25))).unwrap_or_else(|e| panic!("{e}"));
+        assert_eq!(order.shares_at(cad(dec!(121.4))), Ok(qty(dec!(0.2059))));
+        assert_eq!(order.shares_at(cad(dec!(1000000))), Err(Error::NonPositiveQuantity(dec!(0))));
+        assert!(matches!(order.shares_at(usd(dec!(10))), Err(Error::CurrencyMismatch { .. })));
     }
 }

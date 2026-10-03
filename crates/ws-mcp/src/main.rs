@@ -1,18 +1,26 @@
-//! Wealthsimple MCP server and CLI.
-
+mod action;
 mod clear;
 mod cli;
+mod config;
+mod consent;
+mod control;
+mod dashboard;
+#[cfg(test)]
+mod fake;
+mod home;
 mod login;
+mod prompt;
 mod read;
+mod resolve;
 mod server;
+mod setup;
 mod status;
+mod tool;
 mod trade;
 mod wiring;
 
-use anyhow::bail;
 use clap::Parser;
 use tracing_subscriber::EnvFilter;
-use ws_auth::Scope;
 
 use crate::cli::{Cli, Command};
 
@@ -24,12 +32,18 @@ async fn main() -> anyhow::Result<()> {
         .init();
 
     match Cli::parse().command.unwrap_or(Command::Serve) {
-        Command::Login { write, browser } => {
-            let scope = if write { Scope::Write } else { Scope::Read };
-            if browser { login::browser(scope).await } else { login::terminal(scope).await }
-        }
+        Command::Setup => setup::run().await,
         Command::Status => status::show().await,
+        Command::Config { key, value } => config::run(key.as_deref(), value.as_deref()),
+        Command::Login => login::run().await,
+        Command::Logout => clear::logout(),
         Command::Clear => clear::run(),
-        Command::Serve => bail!("the MCP server is not implemented yet"),
+        Command::Serve => wiring::serve().await,
+        Command::Dashboard => dashboard::run().await,
+        Command::Approve { ticket_id } => control::approve(&ticket_id),
+        Command::Kill => control::kill(),
+        Command::Resume => control::resume(),
+        Command::Read(action) => wiring::read(action).await,
+        Command::Trade(action) => wiring::trade(action).await,
     }
 }

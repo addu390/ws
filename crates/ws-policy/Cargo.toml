@@ -14,3 +14,16 @@ ws-core.workspace = true
 ws-config.workspace = true
 ws-broker.workspace = true
 ws-audit.workspace = true
+ws-common.workspace = true
+
+chrono.workspace = true
+rust_decimal.workspace = true
+serde.workspace = true
+thiserror.workspace = true
+uuid.workspace = true
+
+[dev-dependencies]
+ws-common = { workspace = true, features = ["fixtures"] }
+ws-core = { workspace = true, features = ["fixtures"] }
+async-trait.workspace = true
+tokio.workspace = true

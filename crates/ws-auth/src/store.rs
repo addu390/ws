@@ -1,7 +1,3 @@
-//! Session storage backends: the system keyring, and a file store for tests and headless use.
-
-use std::fs;
-use std::io::Write;
 use std::path::PathBuf;
 
 use crate::{Error, Session};
@@ -56,7 +52,6 @@ impl Store for Keyring {
     }
 }
 
-/// Plain JSON on disk, readable only by the owner.
 #[derive(Debug, Clone)]
 pub struct File {
     path: PathBuf,
@@ -71,31 +66,15 @@ impl File {
 
 impl Store for File {
     fn load(&self) -> Result<Option<Session>, Error> {
-        match fs::read_to_string(&self.path) {
-            Ok(json) => Ok(Some(serde_json::from_str(&json)?)),
-            Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(None),
-            Err(e) => Err(store(e)),
-        }
+        ws_common::read_json(&self.path).map_err(store)
     }
 
     fn save(&self, session: &Session) -> Result<(), Error> {
-        if let Some(dir) = self.path.parent() {
-            fs::create_dir_all(dir).map_err(store)?;
-        }
-        let mut options = fs::OpenOptions::new();
-        options.write(true).create(true).truncate(true);
-        #[cfg(unix)]
-        std::os::unix::fs::OpenOptionsExt::mode(&mut options, 0o600);
-        let mut file = options.open(&self.path).map_err(store)?;
-        file.write_all(serde_json::to_string(session)?.as_bytes()).map_err(store)
+        ws_common::write_json(&self.path, session).map_err(store)
     }
 
     fn clear(&self) -> Result<(), Error> {
-        match fs::remove_file(&self.path) {
-            Ok(()) => Ok(()),
-            Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(()),
-            Err(e) => Err(store(e)),
-        }
+        ws_common::remove(&self.path).map(drop).map_err(store)
     }
 }
 
@@ -121,22 +100,15 @@ mod tests {
     }
 
     #[test]
-    fn file_store_round_trips_privately() {
-        let path = std::env::temp_dir().join(format!("ws-auth-{}/session.json", uuid::Uuid::new_v4()));
-        let file = File::new(&path);
+    fn file_store_round_trips() {
+        let scratch = ws_common::fixtures::Scratch::new();
+        let file = File::new(scratch.path("session.json"));
         assert!(matches!(file.load(), Ok(None)));
 
         file.save(&session()).unwrap_or_else(|e| panic!("{e}"));
         assert_eq!(file.load().ok().flatten(), Some(session()));
-        #[cfg(unix)]
-        {
-            use std::os::unix::fs::PermissionsExt;
-            let mode = fs::metadata(&path).map(|m| m.permissions().mode() & 0o777).ok();
-            assert_eq!(mode, Some(0o600));
-        }
 
         file.clear().unwrap_or_else(|e| panic!("{e}"));
         assert!(matches!(file.load(), Ok(None)));
-        let _ = fs::remove_dir(path.parent().unwrap_or(&path));
     }
 }

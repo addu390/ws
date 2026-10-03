@@ -1,5 +1,3 @@
-//! Browser-emulating HTTP client and Wealthsimple base headers.
-
 mod client;
 mod error;
 mod headers;

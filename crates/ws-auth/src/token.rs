@@ -1,5 +1,3 @@
-//! OAuth tokens: granting, refreshing, and introspection.
-
 use std::fmt;
 
 use serde::{Deserialize, Serialize};
@@ -33,7 +31,6 @@ impl Tokens {
         &self.access
     }
 
-    /// Exchanges the refresh token for a new pair. Either token may rotate.
     pub async fn refresh(
         &self,
         client: &Client,
@@ -70,7 +67,6 @@ impl Tokens {
     }
 }
 
-/// What Wealthsimple reports about a live access token.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Introspection {
     identity: IdentityId,
@@ -78,7 +74,6 @@ pub struct Introspection {
 }
 
 impl Introspection {
-    /// `Ok(None)` means the access token is no longer accepted.
     pub async fn fetch(
         client: &Client,
         endpoints: &Endpoints,
@@ -120,7 +115,6 @@ impl Introspection {
     }
 }
 
-/// Best-effort human-readable error from an OAuth error body.
 pub(crate) fn message(response: &Response) -> String {
     response
         .json::<Value>()

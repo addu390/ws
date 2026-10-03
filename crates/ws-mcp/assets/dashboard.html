@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>ws-mcp</title>
+  <link rel="stylesheet" href="/dashboard.css">
+  <script src="/dashboard.js" defer></script>
+</head>
+<body>
+  <header class="bar">
+    <span class="brand">ws-mcp</span>
+    <span id="mode" class="pill">…</span>
+    <span class="spacer"></span>
+    <span id="state" class="state"></span>
+    <button id="kill" type="button" class="danger" hidden>Stop all trading</button>
+    <button id="resume" type="button" class="primary" hidden>Resume trading</button>
+  </header>
+
+  <div id="toast" class="toast" role="status" hidden></div>
+
+  <main id="main">
+    <section id="approvals-panel" class="panel attention" hidden>
+      <h2>Waiting for your approval</h2>
+      <div id="approvals" class="tickets"></div>
+    </section>
+
+    <section id="stats" class="stats"></section>
+    <div id="rules" class="rules"></div>
+
+    <div class="split">
+      <section class="panel">
+        <div class="head">
+          <h2>Accounts</h2>
+          <button id="refresh" type="button" class="ghost">Refresh</button>
+        </div>
+        <div id="accounts" class="accounts"><p class="muted">Loading…</p></div>
+      </section>
+
+      <section id="detail" class="panel">
+        <p class="muted placeholder">Pick an account to see its holdings and open orders.</p>
+      </section>
+    </div>
+
+    <section class="panel">
+      <div class="head"><h2>Activity</h2></div>
+      <div id="audit"></div>
+    </section>
+  </main>
+
+  <div id="gate" class="gate" hidden>
+    <h1>ws-mcp</h1>
+    <p id="gate-message"></p>
+  </div>
+</body>
+</html>

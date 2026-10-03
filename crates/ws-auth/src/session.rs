@@ -1,12 +1,9 @@
-//! An authenticated session: device, session id, tokens, identity, and granted scope.
-
 use serde::{Deserialize, Serialize};
 use ws_core::IdentityId;
 use ws_net::{Client, Headers};
 
 use crate::{Device, Endpoints, Error, Introspection, Tokens};
 
-/// OAuth scope requested at login. A `Read` session cannot place orders even if asked to.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Scope {
@@ -23,7 +20,6 @@ impl Scope {
         }
     }
 
-    /// Classifies a scope string granted by Wealthsimple, such as `read write` from the web app.
     #[must_use]
     pub fn granted(scope: &str) -> Self {
         let writes = |s: &str| s == "write" || s.rsplit_once('.').is_some_and(|(_, action)| action == "write");
@@ -60,19 +56,16 @@ impl Session {
         &self.device
     }
 
-    /// Session, device, and bearer headers for authenticated requests.
     #[must_use]
     pub fn headers(&self) -> Headers {
         Headers::new().session(&self.id).device(self.device.device_id()).bearer(self.tokens.access())
     }
 
-    /// Swaps in fresh tokens. Callers must persist the session afterwards.
     pub async fn refresh(&mut self, client: &Client, endpoints: &Endpoints) -> Result<(), Error> {
         self.tokens = self.tokens.refresh(client, endpoints, &self.device, &self.id).await?;
         Ok(())
     }
 
-    /// Verifies the access token, refreshing it if expired. Returns whether it was refreshed.
     pub async fn ensure_fresh(&mut self, client: &Client, endpoints: &Endpoints) -> Result<bool, Error> {
         if self.introspect(client, endpoints).await?.is_some() {
             return Ok(false);

@@ -10,6 +10,7 @@ publish.workspace = true
 workspace = true
 
 [dependencies]
+ws-common.workspace = true
 ws-core.workspace = true
 ws-config.workspace = true
 ws-net.workspace = true
@@ -21,8 +22,21 @@ ws-audit.workspace = true
 ws-policy.workspace = true
 
 anyhow.workspace = true
+axum.workspace = true
 clap.workspace = true
-rpassword.workspace = true
-tokio.workspace = true
+rmcp.workspace = true
+rust_decimal.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tokio = { workspace = true, features = ["net", "signal"] }
 tracing.workspace = true
 tracing-subscriber.workspace = true
+uuid.workspace = true
+
+[dev-dependencies]
+ws-common = { workspace = true, features = ["fixtures"] }
+ws-core = { workspace = true, features = ["fixtures"] }
+async-trait.workspace = true
+rmcp = { workspace = true, features = ["client"] }
+tower = { workspace = true, features = ["util"] }

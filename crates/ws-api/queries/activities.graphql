@@ -1,0 +1,85 @@
+query FetchActivityFeedItems($first: Int, $cursor: Cursor, $condition: ActivityCondition, $orderBy: [ActivitiesOrderBy!] = OCCURRED_AT_DESC, $accountScope: AccountScope = OWN) {
+  activityFeedItems(
+    first: $first
+    after: $cursor
+    condition: $condition
+    orderBy: $orderBy
+    accountScope: $accountScope
+  ) {
+    edges {
+      node {
+        ...Activity
+        __typename
+      }
+      __typename
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+      __typename
+    }
+    __typename
+  }
+}
+
+fragment Activity on ActivityFeedItem {
+  accountId
+  aftOriginatorName
+  aftTransactionCategory
+  aftTransactionType
+  amount
+  amountSign
+  assetQuantity
+  assetSymbol
+  canonicalId
+  currency
+  eTransferEmail
+  eTransferName
+  externalCanonicalId
+  groupId
+  identityId
+  institutionName
+  occurredAt
+  p2pHandle
+  p2pMessage
+  spendMerchant
+  securityId
+  billPayCompanyName
+  billPayPayeeNickname
+  redactedExternalAccountNumber
+  opposingAccountId
+  status
+  subType
+  type
+  strikePrice
+  contractType
+  expiryDate
+  chequeNumber
+  provisionalCreditAmount
+  primaryBlocker
+  interestRate
+  frequency
+  counterAssetSymbol
+  rewardProgram
+  counterPartyCurrency
+  counterPartyCurrencyAmount
+  counterPartyName
+  fxRate
+  fees
+  reference
+  transferReason
+  transferType
+  optionStrategy
+  rejectionReason
+  resolvable
+  withholdingTaxAmount
+  announcementDate
+  recordDate
+  payableDate
+  grossDividendRate
+  unifiedStatus
+  estimatedCompletionDate
+  realizedPnl
+  settlementIndicator
+  __typename
+}

@@ -12,6 +12,7 @@ workspace = true
 [dependencies]
 ws-core.workspace = true
 ws-net.workspace = true
+ws-common.workspace = true
 
 chromiumoxide.workspace = true
 futures.workspace = true
@@ -26,4 +27,5 @@ tracing.workspace = true
 uuid.workspace = true
 
 [dev-dependencies]
+ws-common = { workspace = true, features = ["fixtures"] }
 wiremock.workspace = true

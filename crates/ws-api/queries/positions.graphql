@@ -1,0 +1,284 @@
+query FetchIdentityPositions($identityId: ID!, $currency: Currency!, $first: Int, $cursor: String, $accountIds: [ID!], $aggregated: Boolean, $currencyOverride: CurrencyOverride, $sort: PositionSort, $sortDirection: PositionSortDirection, $filter: PositionFilter, $since: PointInTime, $includeSecurity: Boolean = false, $includeAccountData: Boolean = false, $includeOneDayReturnsBaseline: Boolean = false) {
+  identity(id: $identityId) {
+    id
+    financials(filter: {accounts: $accountIds}) {
+      current(currency: $currency) {
+        id
+        positions(
+          first: $first
+          after: $cursor
+          aggregated: $aggregated
+          filter: $filter
+          sort: $sort
+          sortDirection: $sortDirection
+        ) {
+          edges {
+            node {
+              ...PositionV2
+              __typename
+            }
+            __typename
+          }
+          pageInfo {
+            hasNextPage
+            endCursor
+            __typename
+          }
+          totalCount
+          status
+          hasOptionsPosition
+          hasCryptoPositionsOnly
+          securityTypes
+          securityCurrencies
+          __typename
+        }
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+}
+
+fragment SecuritySummary on Security {
+  ...SecuritySummaryDetails
+  stock {
+    ...StockSummary
+    __typename
+  }
+  quoteV2(currency: null) {
+    ...SecurityQuoteV2
+    __typename
+  }
+  optionDetails {
+    ...OptionSummary
+    __typename
+  }
+  __typename
+}
+
+fragment SecuritySummaryDetails on Security {
+  id
+  currency
+  inactiveDate
+  status
+  wsTradeEligible
+  equityTradingSessionType
+  securityType
+  active
+  securityGroups {
+    id
+    name
+    __typename
+  }
+  features
+  logoUrl
+  __typename
+}
+
+fragment StockSummary on Stock {
+  name
+  symbol
+  primaryMic
+  primaryExchange
+  __typename
+}
+
+fragment StreamedSecurityQuoteV2 on UnifiedQuote {
+  __typename
+  securityId
+  ask
+  bid
+  currency
+  price
+  sessionPrice
+  quotedAsOf
+  ... on EquityQuote {
+    marketStatus
+    askSize
+    bidSize
+    close
+    high
+    last
+    lastSize
+    low
+    open
+    mid
+    volume: vol
+    referenceClose
+    __typename
+  }
+  ... on OptionQuote {
+    marketStatus
+    askSize
+    bidSize
+    close
+    high
+    last
+    lastSize
+    low
+    open
+    mid
+    volume: vol
+    breakEven
+    inTheMoney
+    liquidityStatus
+    openInterest
+    underlyingSpot
+    __typename
+  }
+}
+
+fragment SecurityQuoteV2 on UnifiedQuote {
+  ...StreamedSecurityQuoteV2
+  previousBaseline
+  __typename
+}
+
+fragment OptionSummary on Option {
+  underlyingSecurity {
+    ...UnderlyingSecuritySummary
+    __typename
+  }
+  maturity
+  osiSymbol
+  expiryDate
+  multiplier
+  optionType
+  strikePrice
+  __typename
+}
+
+fragment UnderlyingSecuritySummary on Security {
+  id
+  stock {
+    name
+    primaryExchange
+    primaryMic
+    symbol
+    __typename
+  }
+  __typename
+}
+
+fragment PositionLeg on PositionLeg {
+  security {
+    id
+    ...SecuritySummary @include(if: $includeSecurity)
+    __typename
+  }
+  quantity
+  positionDirection
+  bookValue {
+    amount
+    currency
+    __typename
+  }
+  totalValue(currencyOverride: $currencyOverride) {
+    amount
+    currency
+    __typename
+  }
+  averagePrice {
+    amount
+    currency
+    __typename
+  }
+  percentageOfAccount
+  unrealizedReturns(since: $since) {
+    amount
+    currency
+    __typename
+  }
+  marketAveragePrice: averagePrice(currencyOverride: $currencyOverride) {
+    amount
+    currency
+    __typename
+  }
+  marketBookValue: bookValue(currencyOverride: $currencyOverride) {
+    amount
+    currency
+    __typename
+  }
+  marketUnrealizedReturns: unrealizedReturns(currencyOverride: $currencyOverride) {
+    amount
+    currency
+    __typename
+  }
+  oneDayReturnsBaselineV2(currencyOverride: $currencyOverride) @include(if: $includeOneDayReturnsBaseline) {
+    baseline {
+      currency
+      amount
+      __typename
+    }
+    useDailyPriceChange
+    __typename
+  }
+  __typename
+}
+
+fragment PositionV2 on PositionV2 {
+  id
+  quantity
+  accounts @include(if: $includeAccountData) {
+    id
+    __typename
+  }
+  percentageOfAccount
+  positionDirection
+  bookValue {
+    amount
+    currency
+    __typename
+  }
+  averagePrice {
+    amount
+    currency
+    __typename
+  }
+  marketAveragePrice: averagePrice(currencyOverride: $currencyOverride) {
+    amount
+    currency
+    __typename
+  }
+  marketBookValue: bookValue(currencyOverride: $currencyOverride) {
+    amount
+    currency
+    __typename
+  }
+  totalValue(currencyOverride: $currencyOverride) {
+    amount
+    currency
+    __typename
+  }
+  unrealizedReturns(since: $since) {
+    amount
+    currency
+    __typename
+  }
+  marketUnrealizedReturns: unrealizedReturns(currencyOverride: $currencyOverride) {
+    amount
+    currency
+    __typename
+  }
+  security {
+    id
+    ...SecuritySummary @include(if: $includeSecurity)
+    __typename
+  }
+  oneDayReturnsBaselineV2(currencyOverride: $currencyOverride) @include(if: $includeOneDayReturnsBaseline) {
+    baseline {
+      currency
+      amount
+      __typename
+    }
+    useDailyPriceChange
+    __typename
+  }
+  strategyType
+  legs {
+    ...PositionLeg
+    __typename
+  }
+  __typename
+}

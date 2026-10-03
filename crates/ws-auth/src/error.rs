@@ -1,5 +1,3 @@
-//! Authentication errors.
-
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error(transparent)]
@@ -10,7 +8,7 @@ pub enum Error {
     Rejected { status: u16, message: String },
     #[error("browser login: {0}")]
     Browser(String),
-    #[error("session expired and could not be refreshed; run `ws-mcp login` again")]
+    #[error("session expired and could not be refreshed, run `ws-mcp login` again")]
     Expired,
     #[error("unexpected identity from Wealthsimple: {0}")]
     Identity(#[from] ws_core::Error),

@@ -1,6 +1,3 @@
-//! Login through a real Chrome window: the user signs in on wealthsimple.com with any 2FA
-//! method, and the session cookies are captured from a throwaway profile.
-
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
@@ -34,8 +31,7 @@ impl Browser {
         Self { client, endpoints }
     }
 
-    /// Web sessions carry whatever scope the web app was granted, in practice full read+write.
-    /// Wealthsimple refuses to narrow it on refresh.
+    /// Web sessions carry the web app's full read+write scope, and Wealthsimple refuses to narrow it on refresh.
     pub async fn login(&self) -> Result<Session, Error> {
         let captured = capture(self.endpoints.login()).await?;
         let device = Device::adopt(captured.device_id, &self.client, &self.endpoints).await?;
@@ -48,8 +44,6 @@ impl Browser {
         Ok(Session::new(device, session_id, captured.tokens, identity, captured.scope))
     }
 
-    /// Deletes browser profiles left behind by a login that crashed before cleaning up.
-    /// Returns how many were removed.
     pub fn purge_leftovers() -> Result<usize, Error> {
         purge_in(&std::env::temp_dir())
     }
@@ -77,7 +71,6 @@ struct Captured {
 }
 
 impl Captured {
-    /// `None` until the user has fully signed in, including 2FA.
     fn from_cookies(access: &str, device_id: &str) -> Option<Self> {
         #[derive(Deserialize)]
         struct Cookie {
@@ -160,10 +153,7 @@ struct Profile {
 impl Profile {
     fn create() -> Result<Self, Error> {
         let path = std::env::temp_dir().join(format!("{PROFILE_PREFIX}{}", Uuid::new_v4()));
-        let mut builder = fs::DirBuilder::new();
-        #[cfg(unix)]
-        std::os::unix::fs::DirBuilderExt::mode(&mut builder, 0o700);
-        builder.create(&path).map_err(|e| Error::Browser(format!("creating browser profile: {e}")))?;
+        ws_common::private_dir(&path).map_err(|e| Error::Browser(format!("creating browser profile: {e}")))?;
         Ok(Self { path })
     }
 
@@ -223,16 +213,16 @@ mod tests {
 
     #[test]
     fn purges_leftover_profiles_only() {
-        let dir = std::env::temp_dir().join(format!("ws-auth-purge-{}", Uuid::new_v4()));
+        let scratch = ws_common::fixtures::Scratch::new();
+        let dir = scratch.dir();
         let leftover = dir.join(format!("{PROFILE_PREFIX}abc"));
         let unrelated = dir.join(format!("not-{PROFILE_PREFIX}abc"));
         for path in [&leftover, &unrelated] {
             fs::create_dir_all(path.join("Default")).unwrap_or_else(|e| panic!("{e}"));
         }
 
-        assert_eq!(purge_in(&dir).ok(), Some(1));
+        assert_eq!(purge_in(dir).ok(), Some(1));
         assert!(!leftover.exists());
         assert!(unrelated.exists());
-        let _ = fs::remove_dir_all(dir);
     }
 }

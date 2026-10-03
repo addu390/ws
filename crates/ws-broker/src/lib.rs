@@ -1,5 +1,5 @@
-//! `Reader` and `Broker` traits, and the live Wealthsimple adapter.
-
 mod broker;
 mod error;
-mod live;
+
+pub use broker::{Broker, Reader};
+pub use error::Error;
