@@ -4,16 +4,42 @@ Unofficial Wealthsimple MCP server in Rust. Not affiliated with or endorsed by W
 
 Wealthsimple has no public API. This talks to the same GraphQL API as the web app, which can change without notice, and automated access may conflict with Wealthsimple's terms. Use at your own risk.
 
-## Modes and Safety
+## Install
 
-Run `ws-mcp setup` to pick the mode and, by name, the accounts the agent may trade in.
+```sh
+git clone https://github.com/addu390/ws.git
+cd ws
+cargo install --path crates/ws-mcp
+```
 
-`~/.ws-mcp/config.toml` picks the mode, and `config.toml` in this repo is the default it falls back to. A config that fails to parse stops ws-mcp instead of guessing.
+## Setup
 
-- `read` (default): account data only. No order tools exist.
-- `paper`: orders are simulated against live quotes, and positions, activity, and orders show the simulation.
-- `trade`: orders reach the real account, only in `allowed_accounts` (empty by default) and within the limits.
+```sh
+ws-mcp login
+ws-mcp setup
+```
 
-Every order is previewed into a ticket, then placed with it once before it expires. Orders above `require_approval_above` also need `ws-mcp approve <ticket>`. `ws-mcp kill` halts all order actions until `ws-mcp resume`, and so does `WS_KILL=1`. Every decision is appended to `~/.ws-mcp/audit.jsonl`.
+`ws-mcp login` is optional, since `setup` asks you to log in if needed.
 
-The session is in the system keychain and everything else is under `~/.ws-mcp`. `ws-mcp clear` removes the session, the audit log, tickets, budgets, and the paper ledger, and keeps your config and kill switch.
+This logs you in, picks the mode (`read`, `paper` or `trade`), and the accounts the agent may trade in. Then add it to your MCP client:
+
+```json
+{
+  "mcpServers": {
+    "ws-mcp": { "command": "ws-mcp" }
+  }
+}
+```
+
+Later, `ws-mcp logout` removes the session, and `ws-mcp clear` also removes the audit log, tickets, budgets, and the paper ledger.
+
+## Example
+
+Ask your agent "buy $50 of XEQT in my TFSA", or do it yourself:
+
+```sh
+ws-mcp preview-order tfsa XEQT buy --amount 50
+ws-mcp place-order <ticket>
+```
+
+Run `ws-mcp --help` for everything else.
